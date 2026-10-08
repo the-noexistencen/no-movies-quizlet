@@ -1,6 +1,7 @@
 /* ==========================================================================
    Minimalist Quizlet - Clean Bare-Bones UI
    Matching netanyahu-s-final-order structure and aesthetics
+   Mobile & PWA Ready
    ========================================================================== */
 
 * {
@@ -12,6 +13,12 @@
 
 input, button, textarea {
   font-family: inherit;
+  touch-action: manipulation;
+}
+
+/* Prevent auto-zooming on iOS inputs by ensuring at least 16px font */
+input, textarea {
+  font-size: 16px;
 }
 
 html, body {
@@ -22,6 +29,8 @@ html, body {
   width: 100%;
   overflow: hidden;
   position: fixed;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -37,7 +46,7 @@ html, body {
 }
 
 /* --------------------------------------------------------------------------
-   Header (Identical to netanyahu-s-final-order)
+   Header (Matching netanyahu-s-final-order with Safe Area support)
    -------------------------------------------------------------------------- */
 .app-header {
   padding: calc(var(--safe-top) + 12px) 16px 12px 16px;
@@ -104,6 +113,7 @@ html, body {
   margin-bottom: 14px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
 
 .tab-bar::-webkit-scrollbar {
@@ -239,16 +249,6 @@ html, body {
   gap: 6px;
 }
 
-.icon-btn {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  font-size: 13px;
-  padding: 6px 8px;
-  cursor: pointer;
-  border-radius: 4px;
-}
-
 .action-btn-sm {
   background: var(--bg-surface-elevated);
   border: 1px solid var(--border-color);
@@ -256,7 +256,7 @@ html, body {
   color: var(--text-primary);
   font-size: 12px;
   font-weight: 600;
-  padding: 4px 10px;
+  padding: 5px 10px;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -275,11 +275,6 @@ html, body {
 
 .action-btn-sm.danger:hover {
   border-color: var(--danger);
-}
-
-.icon-btn:hover {
-  color: var(--text-primary);
-  background: var(--bg-surface-elevated);
 }
 
 /* Empty State */
@@ -331,10 +326,11 @@ html, body {
    -------------------------------------------------------------------------- */
 .fc-stage-box {
   perspective: 1000px;
-  height: 320px;
+  height: clamp(240px, 44vh, 340px);
   width: 100%;
   margin: 0 auto 14px;
   cursor: pointer;
+  user-select: none;
 }
 
 .fc-card {
@@ -413,7 +409,7 @@ html, body {
   justify-content: center;
   text-align: center;
   padding: 12px;
-  font-size: 1.45rem;
+  font-size: clamp(1.2rem, 5vw, 1.5rem);
   font-weight: 600;
   line-height: 1.4;
   word-break: break-word;
@@ -433,13 +429,13 @@ html, body {
 }
 
 .fc-btn {
-  background: var(--bg-surface);
+  background: var(--bg-surface-elevated);
   border: 1px solid var(--border-color);
   border-radius: 6px;
   color: var(--text-primary);
   font-size: 13px;
   font-weight: 600;
-  padding: 7px 14px;
+  padding: 8px 16px;
   cursor: pointer;
 }
 
@@ -502,7 +498,7 @@ html, body {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  padding: 10px 14px;
+  padding: 12px 14px;
   color: var(--text-primary);
   font-size: 13.5px;
   font-weight: 500;
@@ -511,6 +507,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 10px;
+  min-height: 48px;
   transition: all 0.1s ease;
 }
 
@@ -551,7 +548,7 @@ html, body {
   border-radius: 6px;
   padding: 10px 12px;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 16px;
   outline: none;
 }
 
@@ -614,7 +611,7 @@ html, body {
   background: var(--bg-surface);
   border: 1px solid var(--border-color);
   border-radius: 6px;
-  min-height: 84px;
+  min-height: 80px;
   padding: 10px;
   display: flex;
   align-items: center;
@@ -658,7 +655,7 @@ html, body {
 }
 
 /* --------------------------------------------------------------------------
-   Settings View (Matches netanyahu-s-final-order theme selector exactly)
+   Settings View
    -------------------------------------------------------------------------- */
 .settings-view {
   padding-bottom: 24px;
@@ -824,7 +821,7 @@ html, body {
   border-radius: 6px;
   padding: 8px 12px;
   color: var(--text-primary);
-  font-size: 14px;
+  font-size: 16px;
   outline: none;
 }
 
@@ -925,4 +922,133 @@ html, body {
 .toast.show {
   transform: translateX(-50%) translateY(0);
   opacity: 1;
+}
+
+/* ==========================================================================
+   Mobile Responsive Adjustments (< 600px phone screens)
+   ========================================================================== */
+@media (max-width: 600px) {
+  .app-header {
+    padding: calc(var(--safe-top) + 8px) 12px 10px 12px;
+  }
+
+  .header-title-group h1 {
+    font-size: 18px;
+  }
+
+  .header-subtitle {
+    font-size: 11px;
+  }
+
+  .upload-btn {
+    padding: 5px 12px;
+    font-size: 12px;
+  }
+
+  .main-content {
+    padding: 10px 12px calc(var(--safe-bottom) + 20px) 12px;
+  }
+
+  .tab-bar {
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .tab-btn {
+    padding: 6px 10px;
+    font-size: 12px;
+    flex: 1;
+    text-align: center;
+  }
+
+  /* Deck List: Stack title and action buttons so buttons are comfortable touch targets */
+  .deck-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 0;
+  }
+
+  .deck-actions {
+    display: flex;
+    width: 100%;
+    gap: 6px;
+  }
+
+  .action-btn-sm {
+    flex: 1;
+    text-align: center;
+    padding: 6px 0;
+    font-size: 12px;
+  }
+
+  /* Study subnav */
+  .study-subnav {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .study-subnav > div:last-child {
+    display: flex;
+    width: 100%;
+    gap: 4px;
+  }
+
+  .study-subnav > div:last-child .action-btn {
+    flex: 1;
+    text-align: center;
+    padding: 6px 0 !important;
+  }
+
+  /* Flashcards: responsive height */
+  .fc-stage-box {
+    height: clamp(230px, 42vh, 310px);
+    margin-bottom: 12px;
+  }
+
+  .fc-btn {
+    padding: 8px 18px;
+    font-size: 13px;
+  }
+
+  /* Match Mode: 2-column grid for comfortable mobile reading */
+  .match-tiles-matrix {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+  }
+
+  .matrix-tile {
+    min-height: 72px;
+    font-size: 12px;
+    padding: 8px;
+  }
+
+  /* Set Editor: stack term & definition inputs for easy mobile typing */
+  .editor-card-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    background: var(--bg-surface);
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+  }
+
+  .editor-card-row .action-btn-sm {
+    align-self: flex-end;
+    width: auto;
+    padding: 4px 12px;
+  }
+
+  /* Export modal buttons */
+  .modal-actions {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .modal-btn {
+    width: 100%;
+    text-align: center;
+    padding: 8px 0;
+  }
 }

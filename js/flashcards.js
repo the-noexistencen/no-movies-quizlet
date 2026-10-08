@@ -45,6 +45,7 @@ export class FlashcardsController {
         if (e.target.closest('#fcStarBtn')) return;
         this.flip();
       });
+      this.initTouchGestures();
     }
 
     if (this.starBtn) {
@@ -67,6 +68,39 @@ export class FlashcardsController {
         this.reloadDeck();
       });
     }
+  }
+
+  initTouchGestures() {
+    if (!this.stage) return;
+    let startX = 0;
+    let startY = 0;
+    let isSwiping = false;
+
+    this.stage.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isSwiping = true;
+      }
+    }, { passive: true });
+
+    this.stage.addEventListener('touchend', (e) => {
+      if (!isSwiping) return;
+      isSwiping = false;
+      const endX = e.changedTouches[0].clientX;
+      const endY = e.changedTouches[0].clientY;
+      const diffX = endX - startX;
+      const diffY = endY - startY;
+
+      // Detect horizontal swipe if diffX > 45px and predominantly horizontal
+      if (Math.abs(diffX) > 45 && Math.abs(diffX) > Math.abs(diffY) * 1.4) {
+        if (diffX < 0) {
+          this.nextCard();
+        } else {
+          this.prevCard();
+        }
+      }
+    }, { passive: true });
   }
 
   loadSet(setId) {
