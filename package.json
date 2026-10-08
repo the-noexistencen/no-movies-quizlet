@@ -1,0 +1,21 @@
+{
+  "name": "no-movies-quizlet",
+  "version": "1.0.0",
+  "description": "Minimalistic Quizlet clone with Flashcards, Learn, and Match modes in Catppuccin and Classic Dark pastel themes",
+  "main": "index.html",
+  "type": "module",
+  "scripts": {
+    "dev": "npx serve .",
+    "start": "npx serve .",
+    "deploy": "npx vercel --prod"
+  },
+  "keywords": [
+    "quizlet",
+    "flashcards",
+    "learning",
+    "catppuccin",
+    "study"
+  ],
+  "author": "noexistencen",
+  "license": "MIT"
+}
