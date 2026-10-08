@@ -3,7 +3,7 @@
 // Offline-first caching with network-first fallback for updates
 // ==========================================================================
 
-const CACHE_NAME = 'quizlet-cache-v1';
+const CACHE_NAME = 'quizlet-cache-v2';
 const PRECACHE_URLS = [
   '/',
   '/index.html',
@@ -18,9 +18,12 @@ const PRECACHE_URLS = [
   '/js/match.js',
   '/js/set-editor.js',
   '/icons/favicon.svg',
+  '/icons/favicon.png',
   '/icons/icon-180.png',
   '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/icons/icon-512.png',
+  '/icons/apple-touch-icon.png',
+  '/apple-touch-icon.png'
 ];
 
 self.addEventListener('install', (event) => {
