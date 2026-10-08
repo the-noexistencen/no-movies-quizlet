@@ -1,5 +1,6 @@
 // ==========================================================================
 // Set Creator & Editor Module (Minimalist Card Rows & Import Modal)
+// Pure button-driven UI, zero emojis
 // ==========================================================================
 
 import { StorageService } from './storage.js';
@@ -99,14 +100,13 @@ export class SetEditorController {
 
     const parsed = StorageService.parseQuizletText(text);
     if (parsed.length === 0) {
-      alert('Could not parse any cards. Separate terms & definitions with tabs, commas, or dashes.');
+      alert('Could not parse any cards. Separate terms & definitions with " - ", tabs, or commas.');
       return;
     }
 
-    // Create a new set from import
     const newSet = {
       title: `Imported Set (${parsed.length} cards)`,
-      description: 'Imported from Quizlet / text data.',
+      description: 'Imported terms formatted as Term - Definition.',
       terms: parsed
     };
 
@@ -128,7 +128,7 @@ export class SetEditorController {
     row.innerHTML = `
       <input type="text" class="form-input term-input" placeholder="Term..." value="${this.escapeHtml(term)}">
       <input type="text" class="form-input def-input" placeholder="Definition..." value="${this.escapeHtml(definition)}">
-      <button type="button" class="icon-btn remove-btn" title="Remove" style="color: var(--danger);">✕</button>
+      <button type="button" class="action-btn-sm remove-btn" style="color: var(--danger);">Remove</button>
     `;
 
     row.querySelector('.remove-btn').addEventListener('click', () => row.remove());

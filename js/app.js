@@ -1,6 +1,7 @@
 // ==========================================================================
 // Main Application Controller
 // Simplified UI matching netanyahu-s-final-order layout
+// Pure button-driven UI, zero emojis, Term - Definition export system
 // ==========================================================================
 
 import { ThemeManager } from './theme.js';
@@ -36,7 +37,6 @@ class App {
     this.initElements();
     this.bindEvents();
 
-    // Default active set to first deck
     const sets = this.storage.getAllSets();
     if (sets.length > 0) {
       this.activeSetId = sets[0].id;
@@ -88,9 +88,21 @@ class App {
     this.emptyNewBtn = document.getElementById('emptyNewBtn');
     this.decksList = document.getElementById('decksList');
 
+    // Flashcards subnav export button
+    this.fcExportBtn = document.getElementById('fcExportBtn');
+
     // Settings counts
     this.settingsDecksCount = document.getElementById('settingsDecksCount');
     this.settingsCardsCount = document.getElementById('settingsCardsCount');
+
+    // Export Modal
+    this.exportModal = document.getElementById('exportModal');
+    this.exportModalTitle = document.getElementById('exportModalTitle');
+    this.exportTextarea = document.getElementById('exportTextarea');
+    this.exportModalClose = document.getElementById('exportModalClose');
+    this.exportModalCopy = document.getElementById('exportModalCopy');
+    this.exportModalDownload = document.getElementById('exportModalDownload');
+    this.exportingSetId = null;
   }
 
   bindEvents() {
@@ -122,7 +134,7 @@ class App {
         if (this.activeSetId) {
           this.switchTab('flashcards');
         } else {
-          this.toast('Select a deck to study');
+          this.toast('Select or create a deck first');
         }
       });
     }
@@ -133,12 +145,89 @@ class App {
       });
     }
 
+    // Flashcards study view export button
+    if (this.fcExportBtn) {
+      this.fcExportBtn.addEventListener('click', () => {
+        if (this.activeSetId) {
+          this.openExportModal(this.activeSetId);
+        }
+      });
+    }
+
     // Search filter
     if (this.searchInput) {
       this.searchInput.addEventListener('input', () => {
         this.renderDecksList(this.searchInput.value.trim().toLowerCase());
       });
     }
+
+    // Export Modal Actions
+    if (this.exportModalClose) {
+      this.exportModalClose.addEventListener('click', () => {
+        if (this.exportModal) this.exportModal.classList.remove('show');
+      });
+    }
+
+    if (this.exportModalCopy) {
+      this.exportModalCopy.addEventListener('click', () => {
+        if (this.exportTextarea) {
+          navigator.clipboard.writeText(this.exportTextarea.value).then(() => {
+            this.toast('Copied terms to clipboard');
+            if (this.exportModal) this.exportModal.classList.remove('show');
+          });
+        }
+      });
+    }
+
+    if (this.exportModalDownload) {
+      this.exportModalDownload.addEventListener('click', () => {
+        this.downloadExportFile();
+      });
+    }
+  }
+
+  openExportModal(setId) {
+    const set = this.storage.getSet(setId);
+    if (!set) {
+      this.toast('Deck not found');
+      return;
+    }
+
+    this.exportingSetId = setId;
+    const formatted = this.storage.exportSetFormatted(setId);
+
+    if (this.exportModalTitle) {
+      this.exportModalTitle.textContent = `Export: ${set.title}`;
+    }
+
+    if (this.exportTextarea) {
+      this.exportTextarea.value = formatted;
+    }
+
+    if (this.exportModal) {
+      this.exportModal.classList.add('show');
+    }
+  }
+
+  downloadExportFile() {
+    if (!this.exportingSetId) return;
+    const set = this.storage.getSet(this.exportingSetId);
+    if (!set) return;
+
+    const formatted = this.storage.exportSetFormatted(this.exportingSetId);
+    const blob = new Blob([formatted], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const safeTitle = set.title.toLowerCase().replace(/[^a-z0-9_-]/g, '_');
+    a.href = url;
+    a.download = `${safeTitle || 'study_set'}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    this.toast('Downloaded export file');
+    if (this.exportModal) this.exportModal.classList.remove('show');
   }
 
   updateHeaderStats() {
@@ -169,6 +258,7 @@ class App {
     if (allSets.length === 0) {
       this.emptyDecks.style.display = 'flex';
       this.decksList.style.display = 'none';
+      this.updateHeaderStats();
       return;
     } else {
       this.emptyDecks.style.display = 'none';
@@ -188,10 +278,10 @@ class App {
             <div class="deck-subtitle">${cardCount} cards${bestBadge}</div>
           </div>
           <div class="deck-actions">
-            <button class="icon-btn study-btn" title="Study">Study</button>
-            <button class="icon-btn edit-btn" title="Edit">✏️</button>
-            <button class="icon-btn copy-btn" title="Copy Terms">📋</button>
-            <button class="icon-btn delete-btn" title="Delete" style="color: var(--danger);">🗑️</button>
+            <button class="action-btn-sm study-btn">Study</button>
+            <button class="action-btn-sm edit-btn">Edit</button>
+            <button class="action-btn-sm export-btn">Export</button>
+            <button class="action-btn-sm danger delete-btn">Delete</button>
           </div>
         </div>
       `;
@@ -218,12 +308,9 @@ class App {
         this.switchTab('editor');
       });
 
-      item.querySelector('.copy-btn').addEventListener('click', (e) => {
+      item.querySelector('.export-btn').addEventListener('click', (e) => {
         e.stopPropagation();
-        const text = this.storage.exportSetAsTSV(setId);
-        navigator.clipboard.writeText(text).then(() => {
-          this.toast('Terms copied to clipboard');
-        });
+        this.openExportModal(setId);
       });
 
       item.querySelector('.delete-btn').addEventListener('click', (e) => {
@@ -284,7 +371,11 @@ class App {
       case 'flashcards':
         if (this.flashcardsView) this.flashcardsView.style.display = 'block';
         this.match.stopTimer();
-        if (this.activeSetId) this.flashcards.loadSet(this.activeSetId);
+        if (this.activeSetId) {
+          this.flashcards.loadSet(this.activeSetId);
+        } else {
+          this.flashcards.loadSet(null);
+        }
         break;
 
       case 'learn':

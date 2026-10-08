@@ -249,6 +249,34 @@ html, body {
   border-radius: 4px;
 }
 
+.action-btn-sm {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.action-btn-sm:hover {
+  border-color: var(--text-muted);
+}
+
+.action-btn-sm:active {
+  opacity: 0.7;
+}
+
+.action-btn-sm.danger {
+  color: var(--danger);
+}
+
+.action-btn-sm.danger:hover {
+  border-color: var(--danger);
+}
+
 .icon-btn:hover {
   color: var(--text-primary);
   background: var(--bg-surface-elevated);
@@ -355,17 +383,27 @@ html, body {
   letter-spacing: 0.5px;
 }
 
-.fc-star-icon {
-  background: none;
-  border: none;
-  font-size: 18px;
-  color: var(--text-muted);
+.fc-star-btn {
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 10px;
   cursor: pointer;
-  padding: 2px;
+  transition: all 0.15s ease;
 }
 
-.fc-star-icon.starred {
-  color: var(--warning);
+.fc-star-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--text-muted);
+}
+
+.fc-star-btn.starred {
+  background: var(--accent-dim);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .fc-center-text {
@@ -710,9 +748,12 @@ html, body {
 }
 
 .theme-check {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--accent);
+  background: var(--accent-dim);
+  padding: 3px 8px;
+  border-radius: 4px;
   display: none;
 }
 

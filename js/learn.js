@@ -1,5 +1,6 @@
 // ==========================================================================
 // Learn Feature (Adaptive Learning, Multiple Choice & Written Mode)
+// Pure button-driven UI, zero emojis
 // ==========================================================================
 
 export class LearnController {
@@ -121,7 +122,7 @@ export class LearnController {
 
   nextQuestion() {
     if (this.queue.length === 0) {
-      this.toast('🎉 100% Mastered! Starting review session.');
+      this.toast('100% Mastered! Starting review session.');
       this.startSession();
       return;
     }
@@ -219,7 +220,7 @@ export class LearnController {
 
     if (isCorrect) {
       this.mastered.push(this.currentCard);
-      this.showFeedback(true, 'Correct!', '');
+      this.showFeedback(true, 'Correct', '');
       this.awaitingNext = true;
       this.updateStats();
       setTimeout(() => {

@@ -1,5 +1,6 @@
 // ==========================================================================
 // Match Feature (Timed Matching Game)
+// Pure button-driven UI, zero emojis
 // ==========================================================================
 
 export class MatchController {
@@ -175,7 +176,7 @@ export class MatchController {
     this.updateBestDisplay();
 
     if (isNewRecord) {
-      this.toast(`🏆 New Personal Record: ${finalScore.toFixed(1)}s!`);
+      this.toast(`New Personal Record: ${finalScore.toFixed(1)}s!`);
     } else {
       this.toast(`Cleared in ${finalScore.toFixed(1)}s!`);
     }

@@ -45,7 +45,7 @@
     <header class="app-header">
       <div class="header-title-group">
         <h1 id="appHeaderTitle">Quizlet</h1>
-        <div class="header-subtitle" id="appHeaderSubtitle">3 decks • 36 cards</div>
+        <div class="header-subtitle" id="appHeaderSubtitle">0 decks • 0 cards</div>
       </div>
       <div class="header-actions">
         <button class="upload-btn" id="headerNewBtn">+ New</button>
@@ -54,7 +54,7 @@
 
     <!-- Main Content Area -->
     <main class="main-content" id="mainContent">
-      <!-- Tabs (Matching netanyahu-s-final-order) -->
+      <!-- Tabs (Clean Buttons, Zero Emojis) -->
       <div class="tab-bar">
         <button class="tab-btn active" id="tabDecks">Decks</button>
         <button class="tab-btn" id="tabFlashcards">Flashcards</button>
@@ -90,13 +90,14 @@
       <div id="flashcardsView" style="display: none;">
         <div class="study-subnav">
           <div class="subnav-left">
-            <span class="deck-pill" id="fcDeckTitle">Deck Title</span>
+            <span class="deck-pill" id="fcDeckTitle">No Deck Selected</span>
             <span class="deck-sub-pill" id="fcDeckCount">0 cards</span>
           </div>
           <div style="display: flex; gap: 4px;">
-            <button class="action-btn" id="fcSwapSides" style="padding: 4px 8px; font-size: 11px;">⇄ Swap</button>
-            <button class="action-btn" id="fcShuffle" style="padding: 4px 8px; font-size: 11px;">🔀 Shuffle</button>
-            <button class="action-btn" id="fcStarredOnly" style="padding: 4px 8px; font-size: 11px;">★ Starred</button>
+            <button class="action-btn" id="fcSwapSides" style="padding: 4px 8px; font-size: 11px;">Swap Sides</button>
+            <button class="action-btn" id="fcShuffle" style="padding: 4px 8px; font-size: 11px;">Shuffle</button>
+            <button class="action-btn" id="fcStarredOnly" style="padding: 4px 8px; font-size: 11px;">Starred Only</button>
+            <button class="action-btn" id="fcExportBtn" style="padding: 4px 8px; font-size: 11px;">Export</button>
           </div>
         </div>
 
@@ -107,7 +108,7 @@
             <div class="fc-side fc-side-front">
               <div class="fc-top-row">
                 <span class="fc-type-tag" id="fcFrontTag">TERM</span>
-                <button class="fc-star-icon" id="fcStarBtn">☆</button>
+                <button class="fc-star-btn" id="fcStarBtn">Star</button>
               </div>
               <div class="fc-center-text" id="fcFrontText">Term</div>
               <div class="fc-footer-hint">Tap card or press Space to flip</div>
@@ -127,9 +128,9 @@
 
         <!-- Controls -->
         <div class="fc-nav-controls">
-          <button class="fc-btn" id="fcPrev">← Prev</button>
-          <span class="fc-counter-wrap" id="fcCounter">1 / 12</span>
-          <button class="fc-btn" id="fcNext">Next →</button>
+          <button class="fc-btn" id="fcPrev">Previous</button>
+          <span class="fc-counter-wrap" id="fcCounter">0 / 0</span>
+          <button class="fc-btn" id="fcNext">Next</button>
         </div>
 
         <div class="fc-shortcuts-note">
@@ -141,7 +142,7 @@
       <div id="learnView" style="display: none;">
         <div class="study-subnav">
           <div class="subnav-left">
-            <span class="deck-pill" id="learnDeckTitle">Deck Title</span>
+            <span class="deck-pill" id="learnDeckTitle">No Deck Selected</span>
           </div>
           <button class="action-btn" id="learnToggleMode" style="padding: 4px 10px; font-size: 11px;">Mode: Multiple Choice</button>
         </div>
@@ -182,7 +183,7 @@
             <span class="match-clock" id="matchClock">0.0s</span>
           </div>
           <span id="matchBestLabel" style="font-size: 12px; color: var(--text-secondary);">Best: --</span>
-          <button class="upload-btn" id="matchRestart" style="padding: 4px 10px; font-size: 12px;">↺ Restart</button>
+          <button class="upload-btn" id="matchRestart" style="padding: 4px 10px; font-size: 12px;">Restart</button>
         </div>
 
         <div class="match-tiles-matrix" id="matchMatrix"></div>
@@ -207,7 +208,7 @@
                   <div class="theme-card-desc">Pitch black OLED theme with electric blue accents</div>
                 </div>
               </div>
-              <span class="theme-check">✓</span>
+              <span class="theme-check">Selected</span>
             </button>
 
             <button class="theme-card" data-theme="latte">
@@ -223,7 +224,7 @@
                   <div class="theme-card-desc">Light, crisp pastel daylight palette</div>
                 </div>
               </div>
-              <span class="theme-check">✓</span>
+              <span class="theme-check">Selected</span>
             </button>
 
             <button class="theme-card" data-theme="frappe">
@@ -239,7 +240,7 @@
                   <div class="theme-card-desc">Medium-dark muted soothing pastel</div>
                 </div>
               </div>
-              <span class="theme-check">✓</span>
+              <span class="theme-check">Selected</span>
             </button>
 
             <button class="theme-card" data-theme="macchiato">
@@ -255,7 +256,7 @@
                   <div class="theme-card-desc">Smooth dark pastel with blue/lavender accents</div>
                 </div>
               </div>
-              <span class="theme-check">✓</span>
+              <span class="theme-check">Selected</span>
             </button>
 
             <button class="theme-card" data-theme="mocha">
@@ -271,7 +272,7 @@
                   <div class="theme-card-desc">Deep cozy dark pastel with mocha accents</div>
                 </div>
               </div>
-              <span class="theme-check">✓</span>
+              <span class="theme-check">Selected</span>
             </button>
 
           </div>
@@ -282,11 +283,11 @@
           <div class="settings-card">
             <div class="settings-item">
               <span class="settings-label">Study Decks</span>
-              <span class="settings-value" id="settingsDecksCount">3</span>
+              <span class="settings-value" id="settingsDecksCount">0</span>
             </div>
             <div class="settings-item">
               <span class="settings-label">Total Cards</span>
-              <span class="settings-value" id="settingsCardsCount">36</span>
+              <span class="settings-value" id="settingsCardsCount">0</span>
             </div>
             <div class="settings-item">
               <span class="settings-label">App Mode</span>
@@ -294,7 +295,7 @@
             </div>
             <div class="settings-item">
               <span class="settings-label">Version</span>
-              <span class="settings-value">v1.2 Minimal</span>
+              <span class="settings-value">v1.3 Minimal</span>
             </div>
           </div>
         </div>
@@ -337,12 +338,28 @@
       <div class="modal-card">
         <h3>Import Study Set</h3>
         <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
-          Paste terms & definitions separated by tabs, commas, or dashes (Quizlet format).
+          Paste terms & definitions. Supports <code>Term - Definition</code> format, tabs, or commas.
         </p>
-        <textarea class="form-input" id="importInput" rows="6" style="width: 100%; resize: vertical;" placeholder="Term	Definition&#10;Term 2	Definition 2"></textarea>
+        <textarea class="form-input" id="importInput" rows="6" style="width: 100%; resize: vertical;" placeholder="Term 1 - Definition 1&#10;Term 2 - Definition 2"></textarea>
         <div class="modal-actions">
           <button class="modal-btn" id="importModalCancel">Cancel</button>
           <button class="modal-btn confirm" id="importModalConfirm">Import</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal: Export Study Set ("Term - Definition" format) -->
+    <div class="modal-overlay" id="exportModal">
+      <div class="modal-card">
+        <h3 id="exportModalTitle">Export Study Set</h3>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
+          Terms formatted as <code>Term - Definition</code> (one per line)
+        </p>
+        <textarea class="form-input" id="exportTextarea" rows="8" style="width: 100%; font-family: var(--font-family); font-size: 13px; line-height: 1.5; resize: vertical;" readonly></textarea>
+        <div class="modal-actions">
+          <button class="modal-btn" id="exportModalClose">Close</button>
+          <button class="modal-btn" id="exportModalDownload">Download .txt</button>
+          <button class="modal-btn confirm" id="exportModalCopy">Copy to Clipboard</button>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 // ==========================================================================
 // Flashcards Feature (3D Card Flip, Navigation, Starred Filter)
+// Pure button-driven UI, zero emojis
 // ==========================================================================
 
 export class FlashcardsController {
@@ -62,6 +63,7 @@ export class FlashcardsController {
       this.starredOnlyBtn.addEventListener('click', () => {
         this.starredOnly = !this.starredOnly;
         this.starredOnlyBtn.classList.toggle('primary', this.starredOnly);
+        this.starredOnlyBtn.textContent = this.starredOnly ? 'Show All' : 'Starred Only';
         this.reloadDeck();
       });
     }
@@ -75,7 +77,10 @@ export class FlashcardsController {
     if (this.deckCountEl) this.deckCountEl.textContent = `${this.currentSet.terms.length} cards`;
 
     this.starredOnly = false;
-    if (this.starredOnlyBtn) this.starredOnlyBtn.classList.remove('primary');
+    if (this.starredOnlyBtn) {
+      this.starredOnlyBtn.classList.remove('primary');
+      this.starredOnlyBtn.textContent = 'Starred Only';
+    }
 
     this.reloadDeck();
     this.attachKeyboard();
@@ -123,8 +128,9 @@ export class FlashcardsController {
     if (this.frontTag) this.frontTag.textContent = this.termFirst ? 'TERM' : 'DEFINITION';
     if (this.backTag) this.backTag.textContent = this.termFirst ? 'DEFINITION' : 'TERM';
 
+    // Pure text button for star
     if (this.starBtn) {
-      this.starBtn.textContent = card.starred ? '★' : '☆';
+      this.starBtn.textContent = card.starred ? 'Starred' : 'Star';
       this.starBtn.classList.toggle('starred', card.starred);
     }
 
@@ -175,7 +181,7 @@ export class FlashcardsController {
   toggleSides() {
     this.termFirst = !this.termFirst;
     if (this.swapSidesBtn) {
-      this.swapSidesBtn.textContent = this.termFirst ? '⇄ Swap' : '⇄ Inverted';
+      this.swapSidesBtn.textContent = this.termFirst ? 'Swap Sides' : 'Inverted';
     }
     this.updateCardView();
   }
@@ -188,6 +194,7 @@ export class FlashcardsController {
 
     this.currentSet = this.storage.getSet(this.currentSet.id);
     this.updateCardView();
+    this.toast(newStarred ? 'Card starred' : 'Card unstarred');
   }
 
   handleKeydown(e) {
