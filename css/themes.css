@@ -1,173 +1,112 @@
 /* ==========================================================================
-   Catppuccin & Classic Dark Pastel Theme System
-   1. Catppuccin Latte     (Pastel Light)
-   2. Catppuccin Frappé    (Pastel Low-Contrast Dark)
-   3. Catppuccin Macchiato (Pastel Medium-Contrast Dark)
-   4. Catppuccin Mocha     (Pastel High-Contrast Dark)
-   5. Classic Dark         (Deep Slate / Pitch Dark + Quizlet Blue)
+   Minimalist Bare-Bones Quizlet Theme System
+   Matching netanyahu-s-final-order aesthetic
    ========================================================================== */
 
-:root {
-  /* Common metrics */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-  --transition-fast: 0.15s ease;
-  --transition-normal: 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.16);
-  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", Helvetica, Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+:root, [data-theme="classic-dark"] {
+  --bg-primary: #0a0a0a;
+  --bg-surface: #141414;
+  --bg-surface-elevated: #1f1f1f;
+  --border-color: #262626;
+
+  --text-primary: #ffffff;
+  --text-secondary: #999999;
+  --text-muted: #666666;
+
+  --accent: #3b82f6; /* Quizlet Electric Blue */
+  --accent-dim: rgba(59, 130, 246, 0.15);
+  --success: #10b981;
+  --success-dim: rgba(16, 185, 129, 0.15);
+  --danger: #ff453a;
+  --danger-dim: rgba(255, 69, 58, 0.15);
+  --warning: #f59e0b;
+  --theme-color-meta: #0a0a0a;
+
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --safe-top: env(safe-area-inset-top, 20px);
+  --safe-bottom: env(safe-area-inset-bottom, 20px);
 }
 
-/* 1. Catppuccin Latte (Pastel Warm Light) */
-[data-theme="latte"], :root:not([data-theme]) {
-  --theme-name: "Catppuccin Latte";
-  --bg-base: #eff1f5;
-  --bg-surface: #ffffff;
-  --bg-overlay: #e6e9ef;
-  --bg-muted: #dce0e8;
-  --border: #ccd0da;
-  --border-active: #1e66f5;
-  --border-focus: rgba(30, 102, 245, 0.4);
+/* Catppuccin Latte (Light Pastel) */
+[data-theme="latte"] {
+  --bg-primary: #eff1f5;
+  --bg-surface: #e6e9ef;
+  --bg-surface-elevated: #dce0e8;
+  --border-color: #ccd0da;
 
   --text-primary: #4c4f69;
-  --text-secondary: #5c5f77;
-  --text-muted: #6c6f85;
-  --text-inverse: #ffffff;
+  --text-secondary: #6c6f85;
+  --text-muted: #9ca0b0;
 
-  --accent: #1e66f5;          /* Blue */
-  --accent-hover: #1855cc;
-  --accent-subtle: rgba(30, 102, 245, 0.12);
-  --accent-secondary: #7287fd;/* Lavender */
-
-  --success: #40a02b;         /* Green */
-  --success-subtle: rgba(64, 160, 43, 0.15);
-  --error: #d20f39;           /* Red */
-  --error-subtle: rgba(210, 15, 57, 0.15);
-  --warning: #fe640b;         /* Peach */
-  --warning-subtle: rgba(254, 100, 11, 0.15);
-  --card-shadow: 0 4px 20px rgba(76, 79, 105, 0.08);
+  --accent: #1e66f5;
+  --accent-dim: rgba(30, 102, 245, 0.15);
+  --success: #40a02b;
+  --success-dim: rgba(64, 160, 43, 0.15);
+  --danger: #d20f39;
+  --danger-dim: rgba(210, 15, 57, 0.15);
+  --warning: #fe640b;
+  --theme-color-meta: #eff1f5;
 }
 
-/* 2. Catppuccin Frappé (Pastel Soft Dark) */
+/* Catppuccin Frappé (Medium-Dark Muted Pastel) */
 [data-theme="frappe"] {
-  --theme-name: "Catppuccin Frappé";
-  --bg-base: #303446;
+  --bg-primary: #303446;
   --bg-surface: #292c3c;
-  --bg-overlay: #414559;
-  --bg-muted: #232634;
-  --border: #51576d;
-  --border-active: #8caaee;
-  --border-focus: rgba(140, 170, 238, 0.4);
+  --bg-surface-elevated: #414559;
+  --border-color: #51576d;
 
   --text-primary: #c6d0f5;
-  --text-secondary: #b5bfe2;
-  --text-muted: #a5adce;
-  --text-inverse: #232634;
+  --text-secondary: #a5adce;
+  --text-muted: #737994;
 
-  --accent: #8caaee;          /* Blue */
-  --accent-hover: #9bb7f3;
-  --accent-subtle: rgba(140, 170, 238, 0.16);
-  --accent-secondary: #babbf1;/* Lavender */
-
-  --success: #a6d189;         /* Green */
-  --success-subtle: rgba(166, 209, 137, 0.2);
-  --error: #e78284;           /* Red */
-  --error-subtle: rgba(231, 130, 132, 0.2);
-  --warning: #ef9f76;         /* Peach */
-  --warning-subtle: rgba(239, 159, 118, 0.2);
-  --card-shadow: 0 4px 24px rgba(24, 25, 38, 0.4);
+  --accent: #8caaee;
+  --accent-dim: rgba(140, 170, 238, 0.15);
+  --success: #a6d189;
+  --success-dim: rgba(166, 209, 137, 0.15);
+  --danger: #e78284;
+  --danger-dim: rgba(231, 130, 132, 0.15);
+  --warning: #ef9f76;
+  --theme-color-meta: #303446;
 }
 
-/* 3. Catppuccin Macchiato (Pastel Medium Dark) */
+/* Catppuccin Macchiato (Medium-Dark Soothing Pastel) */
 [data-theme="macchiato"] {
-  --theme-name: "Catppuccin Macchiato";
-  --bg-base: #24273a;
+  --bg-primary: #24273a;
   --bg-surface: #1e2030;
-  --bg-overlay: #363a4f;
-  --bg-muted: #181926;
-  --border: #494d64;
-  --border-active: #8aadf4;
-  --border-focus: rgba(138, 173, 244, 0.4);
+  --bg-surface-elevated: #363a4f;
+  --border-color: #494d64;
 
   --text-primary: #cad3f5;
-  --text-secondary: #b8c0e0;
-  --text-muted: #a5adcb;
-  --text-inverse: #181926;
+  --text-secondary: #a5adcb;
+  --text-muted: #6e738d;
 
-  --accent: #8aadf4;          /* Blue */
-  --accent-hover: #98bbf8;
-  --accent-subtle: rgba(138, 173, 244, 0.16);
-  --accent-secondary: #b7bdf8;/* Lavender */
-
-  --success: #a6da95;         /* Green */
-  --success-subtle: rgba(166, 218, 149, 0.2);
-  --error: #ed8796;           /* Red */
-  --error-subtle: rgba(237, 135, 150, 0.2);
-  --warning: #f5a97f;         /* Peach */
-  --warning-subtle: rgba(245, 169, 127, 0.2);
-  --card-shadow: 0 4px 24px rgba(18, 19, 30, 0.45);
+  --accent: #8aadf4;
+  --accent-dim: rgba(138, 173, 244, 0.15);
+  --success: #a6da95;
+  --success-dim: rgba(166, 218, 149, 0.15);
+  --danger: #ed8796;
+  --danger-dim: rgba(237, 135, 150, 0.15);
+  --warning: #f5a97f;
+  --theme-color-meta: #24273a;
 }
 
-/* 4. Catppuccin Mocha (Pastel Deep Dark) */
+/* Catppuccin Mocha (Deep Dark Cozy Pastel) */
 [data-theme="mocha"] {
-  --theme-name: "Catppuccin Mocha";
-  --bg-base: #1e1e2e;
+  --bg-primary: #1e1e2e;
   --bg-surface: #181825;
-  --bg-overlay: #313244;
-  --bg-muted: #11111b;
-  --border: #45475a;
-  --border-active: #89b4fa;
-  --border-focus: rgba(137, 180, 250, 0.4);
+  --bg-surface-elevated: #313244;
+  --border-color: #45475a;
 
   --text-primary: #cdd6f4;
-  --text-secondary: #bac2de;
-  --text-muted: #a6adc8;
-  --text-inverse: #11111b;
+  --text-secondary: #a6adc8;
+  --text-muted: #6c7086;
 
-  --accent: #89b4fa;          /* Blue */
-  --accent-hover: #97bffe;
-  --accent-subtle: rgba(137, 180, 250, 0.16);
-  --accent-secondary: #b4befe;/* Lavender */
-
-  --success: #a6e3a1;         /* Green */
-  --success-subtle: rgba(166, 227, 161, 0.2);
-  --error: #f38ba8;           /* Red */
-  --error-subtle: rgba(243, 139, 168, 0.2);
-  --warning: #fab387;         /* Peach */
-  --warning-subtle: rgba(250, 179, 135, 0.2);
-  --card-shadow: 0 4px 24px rgba(10, 10, 18, 0.5);
-}
-
-/* 5. Classic Dark (Pitch / Deep Slate + Quizlet Electric Blue) */
-[data-theme="classic-dark"] {
-  --theme-name: "Classic Dark";
-  --bg-base: #0b0f19;
-  --bg-surface: #111827;
-  --bg-overlay: #1f2937;
-  --bg-muted: #030712;
-  --border: #374151;
-  --border-active: #3b82f6;
-  --border-focus: rgba(59, 130, 246, 0.4);
-
-  --text-primary: #f9fafb;
-  --text-secondary: #e5e7eb;
-  --text-muted: #9ca3af;
-  --text-inverse: #030712;
-
-  --accent: #3b82f6;          /* Quizlet Blue */
-  --accent-hover: #2563eb;
-  --accent-subtle: rgba(59, 130, 246, 0.16);
-  --accent-secondary: #6366f1;/* Indigo */
-
-  --success: #10b981;         /* Emerald */
-  --success-subtle: rgba(16, 185, 129, 0.2);
-  --error: #ef4444;           /* Red */
-  --error-subtle: rgba(239, 68, 68, 0.2);
-  --warning: #f59e0b;         /* Amber */
-  --warning-subtle: rgba(245, 158, 11, 0.2);
-  --card-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+  --accent: #89b4fa;
+  --accent-dim: rgba(137, 180, 250, 0.15);
+  --success: #a6e3a1;
+  --success-dim: rgba(166, 227, 161, 0.15);
+  --danger: #f38ba8;
+  --danger-dim: rgba(243, 139, 168, 0.15);
+  --warning: #fab387;
+  --theme-color-meta: #1e1e2e;
 }

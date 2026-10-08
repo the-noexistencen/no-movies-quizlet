@@ -1,16 +1,18 @@
 // ==========================================================================
-// Flashcards Feature (3D Card Flip, Navigation, Keyboard Shortcuts, Stars)
+// Flashcards Feature (3D Card Flip, Navigation, Starred Filter)
 // ==========================================================================
 
 export class FlashcardsController {
-  constructor(storageService) {
+  constructor(storageService, toastFn) {
     this.storage = storageService;
+    this.toast = toastFn || console.log;
     this.currentSet = null;
     this.cards = [];
     this.currentIndex = 0;
     this.isFlipped = false;
     this.starredOnly = false;
-    this.termFirst = true; // true: Term on front, false: Definition on front
+    this.termFirst = true;
+
     this.boundKeyHandler = this.handleKeydown.bind(this);
     this.initElements();
   }
@@ -20,17 +22,18 @@ export class FlashcardsController {
     this.cardInner = document.getElementById('fcCardInner');
     this.frontText = document.getElementById('fcFrontText');
     this.backText = document.getElementById('fcBackText');
-    this.frontBadge = document.getElementById('fcFrontBadge');
-    this.backBadge = document.getElementById('fcBackBadge');
+    this.frontTag = document.getElementById('fcFrontTag');
+    this.backTag = document.getElementById('fcBackTag');
     this.starBtn = document.getElementById('fcStarBtn');
-    this.prevBtn = document.getElementById('fcPrevBtn');
-    this.nextBtn = document.getElementById('fcNextBtn');
+    this.prevBtn = document.getElementById('fcPrev');
+    this.nextBtn = document.getElementById('fcNext');
     this.counterEl = document.getElementById('fcCounter');
-    this.progressBar = document.getElementById('fcProgressFill');
-    this.shuffleBtn = document.getElementById('fcShuffleBtn');
-    this.swapSidesBtn = document.getElementById('fcSwapSidesBtn');
-    this.filterAllBtn = document.getElementById('fcFilterAll');
-    this.filterStarredBtn = document.getElementById('fcFilterStarred');
+    this.deckTitleEl = document.getElementById('fcDeckTitle');
+    this.deckCountEl = document.getElementById('fcDeckCount');
+
+    this.swapSidesBtn = document.getElementById('fcSwapSides');
+    this.shuffleBtn = document.getElementById('fcShuffle');
+    this.starredOnlyBtn = document.getElementById('fcStarredOnly');
 
     this.bindEvents();
   }
@@ -38,7 +41,6 @@ export class FlashcardsController {
   bindEvents() {
     if (this.stage) {
       this.stage.addEventListener('click', (e) => {
-        // Avoid flip if clicking the star button
         if (e.target.closest('#fcStarBtn')) return;
         this.flip();
       });
@@ -56,18 +58,10 @@ export class FlashcardsController {
     if (this.shuffleBtn) this.shuffleBtn.addEventListener('click', () => this.shuffle());
     if (this.swapSidesBtn) this.swapSidesBtn.addEventListener('click', () => this.toggleSides());
 
-    if (this.filterAllBtn) {
-      this.filterAllBtn.addEventListener('click', () => {
-        this.starredOnly = false;
-        this.updateFilterButtons();
-        this.reloadDeck();
-      });
-    }
-
-    if (this.filterStarredBtn) {
-      this.filterStarredBtn.addEventListener('click', () => {
-        this.starredOnly = true;
-        this.updateFilterButtons();
+    if (this.starredOnlyBtn) {
+      this.starredOnlyBtn.addEventListener('click', () => {
+        this.starredOnly = !this.starredOnly;
+        this.starredOnlyBtn.classList.toggle('primary', this.starredOnly);
         this.reloadDeck();
       });
     }
@@ -77,8 +71,12 @@ export class FlashcardsController {
     this.currentSet = this.storage.getSet(setId);
     if (!this.currentSet) return;
 
+    if (this.deckTitleEl) this.deckTitleEl.textContent = this.currentSet.title;
+    if (this.deckCountEl) this.deckCountEl.textContent = `${this.currentSet.terms.length} cards`;
+
     this.starredOnly = false;
-    this.updateFilterButtons();
+    if (this.starredOnlyBtn) this.starredOnlyBtn.classList.remove('primary');
+
     this.reloadDeck();
     this.attachKeyboard();
   }
@@ -98,64 +96,42 @@ export class FlashcardsController {
     this.updateCardView();
   }
 
-  updateFilterButtons() {
-    if (!this.currentSet) return;
-    const totalCount = this.currentSet.terms.length;
-    const starredCount = this.currentSet.terms.filter(t => t.starred).length;
-
-    if (this.filterAllBtn) {
-      this.filterAllBtn.textContent = `All (${totalCount})`;
-      this.filterAllBtn.classList.toggle('active', !this.starredOnly);
-    }
-
-    if (this.filterStarredBtn) {
-      this.filterStarredBtn.textContent = `★ Starred (${starredCount})`;
-      this.filterStarredBtn.classList.toggle('active', this.starredOnly);
-    }
-  }
-
   updateCardView() {
     if (this.cardInner) {
-      this.cardInner.classList.toggle('is-flipped', this.isFlipped);
+      this.cardInner.classList.toggle('flipped', this.isFlipped);
     }
 
     if (!this.cards || this.cards.length === 0) {
-      if (this.frontText) this.frontText.textContent = this.starredOnly ? 'No starred terms yet!' : 'This deck is empty.';
-      if (this.backText) this.backText.textContent = this.starredOnly ? 'Star terms while studying to review them here.' : 'Add terms in the editor.';
+      if (this.frontText) this.frontText.textContent = this.starredOnly ? 'No starred cards yet' : 'Empty deck';
+      if (this.backText) this.backText.textContent = this.starredOnly ? 'Star cards while studying to review them here.' : 'Add cards to this deck';
       if (this.counterEl) this.counterEl.textContent = '0 / 0';
-      if (this.progressBar) this.progressBar.style.width = '0%';
       if (this.starBtn) this.starBtn.style.display = 'none';
+      if (this.prevBtn) this.prevBtn.disabled = true;
+      if (this.nextBtn) this.nextBtn.disabled = true;
       return;
     }
 
     if (this.starBtn) this.starBtn.style.display = 'block';
 
     const card = this.cards[this.currentIndex];
-    const frontContent = this.termFirst ? card.term : card.definition;
-    const backContent = this.termFirst ? card.definition : card.term;
+    const front = this.termFirst ? card.term : card.definition;
+    const back = this.termFirst ? card.definition : card.term;
 
-    if (this.frontText) this.frontText.textContent = frontContent;
-    if (this.backText) this.backText.textContent = backContent;
+    if (this.frontText) this.frontText.textContent = front;
+    if (this.backText) this.backText.textContent = back;
 
-    if (this.frontBadge) this.frontBadge.textContent = this.termFirst ? 'TERM' : 'DEFINITION';
-    if (this.backBadge) this.backBadge.textContent = this.termFirst ? 'DEFINITION' : 'TERM';
+    if (this.frontTag) this.frontTag.textContent = this.termFirst ? 'TERM' : 'DEFINITION';
+    if (this.backTag) this.backTag.textContent = this.termFirst ? 'DEFINITION' : 'TERM';
 
-    // Star icon state
     if (this.starBtn) {
       this.starBtn.textContent = card.starred ? '★' : '☆';
       this.starBtn.classList.toggle('starred', card.starred);
     }
 
-    // Counter and Progress
     const total = this.cards.length;
     const currentNum = this.currentIndex + 1;
     if (this.counterEl) this.counterEl.textContent = `${currentNum} / ${total}`;
-    if (this.progressBar) {
-      const pct = (currentNum / total) * 100;
-      this.progressBar.style.width = `${pct}%`;
-    }
 
-    // Navigation buttons disabled states
     if (this.prevBtn) this.prevBtn.disabled = this.currentIndex === 0;
     if (this.nextBtn) this.nextBtn.disabled = this.currentIndex === total - 1;
   }
@@ -164,7 +140,7 @@ export class FlashcardsController {
     if (!this.cards || this.cards.length === 0) return;
     this.isFlipped = !this.isFlipped;
     if (this.cardInner) {
-      this.cardInner.classList.toggle('is-flipped', this.isFlipped);
+      this.cardInner.classList.toggle('flipped', this.isFlipped);
     }
   }
 
@@ -193,12 +169,13 @@ export class FlashcardsController {
     this.currentIndex = 0;
     this.isFlipped = false;
     this.updateCardView();
+    this.toast('Deck shuffled');
   }
 
   toggleSides() {
     this.termFirst = !this.termFirst;
     if (this.swapSidesBtn) {
-      this.swapSidesBtn.textContent = this.termFirst ? '⇄ Swap (Term first)' : '⇄ Swap (Def first)';
+      this.swapSidesBtn.textContent = this.termFirst ? '⇄ Swap' : '⇄ Inverted';
     }
     this.updateCardView();
   }
@@ -209,18 +186,14 @@ export class FlashcardsController {
     const newStarred = this.storage.toggleStar(this.currentSet.id, card.id);
     card.starred = newStarred;
 
-    // Refresh currentSet reference
     this.currentSet = this.storage.getSet(this.currentSet.id);
-    this.updateFilterButtons();
     this.updateCardView();
   }
 
   handleKeydown(e) {
-    // Ignore keystrokes if typing inside an input/textarea
     if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
-    // Only handle if Flashcards view is active
-    const fcView = document.getElementById('viewFlashcards');
-    if (!fcView || !fcView.classList.contains('active')) return;
+    const fcView = document.getElementById('flashcardsView');
+    if (!fcView || fcView.style.display === 'none') return;
 
     if (e.code === 'Space' || e.key === ' ') {
       e.preventDefault();
@@ -237,9 +210,6 @@ export class FlashcardsController {
     } else if (e.key === 'r' || e.key === 'R') {
       e.preventDefault();
       this.shuffle();
-    } else if (e.key === 'f' || e.key === 'F') {
-      e.preventDefault();
-      this.toggleSides();
     }
   }
 

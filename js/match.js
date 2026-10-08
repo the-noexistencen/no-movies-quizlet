@@ -1,16 +1,17 @@
 // ==========================================================================
-// Match Feature (Timed Memory Tile Matching Game, Live Stopwatch & High Scores)
+// Match Feature (Timed Matching Game)
 // ==========================================================================
 
 export class MatchController {
-  constructor(storageService) {
+  constructor(storageService, toastFn) {
     this.storage = storageService;
+    this.toast = toastFn || console.log;
     this.currentSet = null;
-    
+
     this.timerInterval = null;
     this.startTime = null;
     this.elapsedSeconds = 0;
-    
+
     this.firstSelected = null;
     this.secondSelected = null;
     this.isProcessing = false;
@@ -21,15 +22,10 @@ export class MatchController {
   }
 
   initElements() {
-    this.stopwatchEl = document.getElementById('matchStopwatch');
-    this.bestRecordEl = document.getElementById('matchBestRecord');
-    this.gridContainer = document.getElementById('matchGrid');
-    this.restartBtn = document.getElementById('matchRestartBtn');
-    
-    this.victoryModal = document.getElementById('matchVictoryModal');
-    this.finalTimeEl = document.getElementById('matchFinalTime');
-    this.recordBadgeEl = document.getElementById('matchRecordBadge');
-    this.modalPlayAgainBtn = document.getElementById('matchPlayAgainBtn');
+    this.clockEl = document.getElementById('matchClock');
+    this.bestLabel = document.getElementById('matchBestLabel');
+    this.restartBtn = document.getElementById('matchRestart');
+    this.matrixContainer = document.getElementById('matchMatrix');
 
     this.bindEvents();
   }
@@ -38,30 +34,19 @@ export class MatchController {
     if (this.restartBtn) {
       this.restartBtn.addEventListener('click', () => this.startNewGame());
     }
-
-    if (this.modalPlayAgainBtn) {
-      this.modalPlayAgainBtn.addEventListener('click', () => {
-        if (this.victoryModal) this.victoryModal.classList.remove('show');
-        this.startNewGame();
-      });
-    }
   }
 
   loadSet(setId) {
     this.currentSet = this.storage.getSet(setId);
     if (!this.currentSet) return;
-    this.updateBestRecordDisplay();
+    this.updateBestDisplay();
     this.startNewGame();
   }
 
-  updateBestRecordDisplay() {
-    if (!this.bestRecordEl || !this.currentSet) return;
+  updateBestDisplay() {
+    if (!this.bestLabel || !this.currentSet) return;
     const best = this.storage.getBestMatchTime(this.currentSet.id);
-    if (best !== null) {
-      this.bestRecordEl.textContent = `Best: ${best.toFixed(1)}s`;
-    } else {
-      this.bestRecordEl.textContent = 'Best: --';
-    }
+    this.bestLabel.textContent = best !== null ? `Best: ${best.toFixed(1)}s` : 'Best: --';
   }
 
   startNewGame() {
@@ -74,45 +59,35 @@ export class MatchController {
     this.matchedPairsCount = 0;
 
     if (!this.currentSet || !this.currentSet.terms || this.currentSet.terms.length === 0) {
-      if (this.gridContainer) this.gridContainer.innerHTML = '<p>No terms available for match.</p>';
+      if (this.matrixContainer) this.matrixContainer.innerHTML = '<p style="color: var(--text-muted); padding: 16px;">Deck has no cards.</p>';
       return;
     }
 
-    // Pick up to 6 pairs (12 tiles total) for optimal quick-paced desktop and mobile play
-    const availableTerms = [...this.currentSet.terms];
-    const pairsToUse = this.shuffleArray(availableTerms).slice(0, 6);
+    const available = [...this.currentSet.terms];
+    const pairsToUse = this.shuffleArray(available).slice(0, 6);
     this.totalPairs = pairsToUse.length;
 
-    // Create tile objects: half terms, half definitions
     const tiles = [];
     pairsToUse.forEach(item => {
-      tiles.push({
-        pairId: item.id,
-        type: 'term',
-        text: item.term
-      });
-      tiles.push({
-        pairId: item.id,
-        type: 'definition',
-        text: item.definition
-      });
+      tiles.push({ pairId: item.id, text: item.term });
+      tiles.push({ pairId: item.id, text: item.definition });
     });
 
-    const shuffledTiles = this.shuffleArray(tiles);
-    this.renderGrid(shuffledTiles);
+    const shuffled = this.shuffleArray(tiles);
+    this.renderMatrix(shuffled);
     this.startTimer();
   }
 
-  renderGrid(tiles) {
-    if (!this.gridContainer) return;
+  renderMatrix(tiles) {
+    if (!this.matrixContainer) return;
 
-    this.gridContainer.innerHTML = tiles.map((tile, idx) => `
-      <div class="match-tile" data-index="${idx}" data-pair="${tile.pairId}">
-        <span>${tile.text}</span>
+    this.matrixContainer.innerHTML = tiles.map((tile, idx) => `
+      <div class="matrix-tile" data-index="${idx}" data-pair="${tile.pairId}">
+        <span>${this.escapeHtml(tile.text)}</span>
       </div>
     `).join('');
 
-    this.gridContainer.querySelectorAll('.match-tile').forEach(tileEl => {
+    this.matrixContainer.querySelectorAll('.matrix-tile').forEach(tileEl => {
       tileEl.addEventListener('click', () => this.handleTileClick(tileEl));
     });
   }
@@ -127,25 +102,24 @@ export class MatchController {
       this.firstSelected = tileEl;
     } else {
       this.secondSelected = tileEl;
-      this.checkMatch();
+      this.checkPair();
     }
   }
 
-  checkMatch() {
+  checkPair() {
     this.isProcessing = true;
     const pair1 = this.firstSelected.dataset.pair;
     const pair2 = this.secondSelected.dataset.pair;
 
     if (pair1 === pair2) {
-      // MATCH!
-      const tile1 = this.firstSelected;
-      const tile2 = this.secondSelected;
+      const t1 = this.firstSelected;
+      const t2 = this.secondSelected;
 
       setTimeout(() => {
-        tile1.classList.remove('selected');
-        tile2.classList.remove('selected');
-        tile1.classList.add('matched');
-        tile2.classList.add('matched');
+        t1.classList.remove('selected');
+        t2.classList.remove('selected');
+        t1.classList.add('matched');
+        t2.classList.add('matched');
 
         this.matchedPairsCount++;
         this.firstSelected = null;
@@ -153,24 +127,23 @@ export class MatchController {
         this.isProcessing = false;
 
         if (this.matchedPairsCount >= this.totalPairs) {
-          this.handleGameOver();
+          this.handleWin();
         }
-      }, 200);
+      }, 150);
     } else {
-      // MISMATCH!
-      const tile1 = this.firstSelected;
-      const tile2 = this.secondSelected;
+      const t1 = this.firstSelected;
+      const t2 = this.secondSelected;
 
-      tile1.classList.add('mismatch');
-      tile2.classList.add('mismatch');
+      t1.classList.add('mismatch');
+      t2.classList.add('mismatch');
 
       setTimeout(() => {
-        tile1.classList.remove('selected', 'mismatch');
-        tile2.classList.remove('selected', 'mismatch');
+        t1.classList.remove('selected', 'mismatch');
+        t2.classList.remove('selected', 'mismatch');
         this.firstSelected = null;
         this.secondSelected = null;
         this.isProcessing = false;
-      }, 500);
+      }, 400);
     }
   }
 
@@ -190,28 +163,21 @@ export class MatchController {
   }
 
   updateTimerDisplay(seconds) {
-    if (this.stopwatchEl) {
-      this.stopwatchEl.textContent = `${seconds.toFixed(1)}s`;
+    if (this.clockEl) {
+      this.clockEl.textContent = `${seconds.toFixed(1)}s`;
     }
   }
 
-  handleGameOver() {
+  handleWin() {
     this.stopTimer();
     const finalScore = this.elapsedSeconds;
     const isNewRecord = this.storage.saveBestMatchTime(this.currentSet.id, finalScore);
+    this.updateBestDisplay();
 
-    this.updateBestRecordDisplay();
-
-    if (this.finalTimeEl) {
-      this.finalTimeEl.textContent = `${finalScore.toFixed(1)}s`;
-    }
-
-    if (this.recordBadgeEl) {
-      this.recordBadgeEl.style.display = isNewRecord ? 'inline-block' : 'none';
-    }
-
-    if (this.victoryModal) {
-      this.victoryModal.classList.add('show');
+    if (isNewRecord) {
+      this.toast(`🏆 New Personal Record: ${finalScore.toFixed(1)}s!`);
+    } else {
+      this.toast(`Cleared in ${finalScore.toFixed(1)}s!`);
     }
   }
 
@@ -222,5 +188,13 @@ export class MatchController {
       [res[i], res[j]] = [res[j], res[i]];
     }
     return res;
+  }
+
+  escapeHtml(str) {
+    return (str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 }

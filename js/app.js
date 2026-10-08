@@ -1,5 +1,6 @@
 // ==========================================================================
-// Main Application Controller & View Router
+// Main Application Controller
+// Simplified UI matching netanyahu-s-final-order layout
 // ==========================================================================
 
 import { ThemeManager } from './theme.js';
@@ -11,212 +12,310 @@ import { SetEditorController } from './set-editor.js';
 
 class App {
   constructor() {
-    this.themeManager = new ThemeManager();
+    this.toastTimer = null;
     this.storage = new StorageService();
-    this.activeSetId = null;
-    this.currentView = 'dashboard';
+    this.themeManager = new ThemeManager(this.toast.bind(this));
 
-    this.flashcards = new FlashcardsController(this.storage);
-    this.learn = new LearnController(this.storage);
-    this.match = new MatchController(this.storage);
+    this.activeSetId = null;
+    this.currentTab = 'decks';
+
+    this.flashcards = new FlashcardsController(this.storage, this.toast.bind(this));
+    this.learn = new LearnController(this.storage, this.toast.bind(this));
+    this.match = new MatchController(this.storage, this.toast.bind(this));
+
     this.editor = new SetEditorController(this.storage, (savedId) => {
-      this.renderDashboard();
+      this.renderDecksList();
       if (savedId) {
-        this.switchView('flashcards', savedId);
+        this.activeSetId = savedId;
+        this.switchTab('flashcards');
       } else {
-        this.switchView('dashboard');
+        this.switchTab('decks');
       }
-    });
+    }, this.toast.bind(this));
 
     this.initElements();
     this.bindEvents();
-    this.renderDashboard();
+
+    // Default active set to first deck
+    const sets = this.storage.getAllSets();
+    if (sets.length > 0) {
+      this.activeSetId = sets[0].id;
+    }
+
+    this.renderDecksList();
+    this.updateHeaderStats();
+  }
+
+  toast(message) {
+    const toastEl = document.getElementById('toast');
+    const toastMsg = document.getElementById('toastMessage');
+    if (!toastEl || !toastMsg) return;
+
+    toastMsg.textContent = message;
+    toastEl.classList.add('show');
+
+    if (this.toastTimer) clearTimeout(this.toastTimer);
+    this.toastTimer = setTimeout(() => {
+      toastEl.classList.remove('show');
+    }, 2000);
   }
 
   initElements() {
-    this.brandLogo = document.getElementById('brandLogo');
-    this.btnNewSet = document.getElementById('headerBtnNewSet');
-    this.navTabFlashcards = document.getElementById('navTabFlashcards');
-    this.navTabLearn = document.getElementById('navTabLearn');
-    this.navTabMatch = document.getElementById('navTabMatch');
-    this.navTabsWrap = document.getElementById('navTabsWrap');
+    // Header
+    this.headerSubtitle = document.getElementById('appHeaderSubtitle');
+    this.headerNewBtn = document.getElementById('headerNewBtn');
 
-    this.viewDashboard = document.getElementById('viewDashboard');
-    this.viewFlashcards = document.getElementById('viewFlashcards');
-    this.viewLearn = document.getElementById('viewLearn');
-    this.viewMatch = document.getElementById('viewMatch');
-    this.viewEditor = document.getElementById('viewEditor');
+    // Tabs
+    this.tabDecks = document.getElementById('tabDecks');
+    this.tabFlashcards = document.getElementById('tabFlashcards');
+    this.tabLearn = document.getElementById('tabLearn');
+    this.tabMatch = document.getElementById('tabMatch');
+    this.tabSettings = document.getElementById('tabSettings');
 
-    this.setsGrid = document.getElementById('setsGrid');
+    // Views
+    this.decksView = document.getElementById('decksView');
+    this.flashcardsView = document.getElementById('flashcardsView');
+    this.learnView = document.getElementById('learnView');
+    this.matchView = document.getElementById('matchView');
+    this.settingsView = document.getElementById('settingsView');
+    this.editorView = document.getElementById('editorView');
+
+    // Decks View controls
+    this.searchInput = document.getElementById('searchInput');
+    this.quickActionStudy = document.getElementById('quickActionStudy');
+    this.quickActionImport = document.getElementById('quickActionImport');
+    this.emptyDecks = document.getElementById('emptyDecks');
+    this.emptyNewBtn = document.getElementById('emptyNewBtn');
+    this.decksList = document.getElementById('decksList');
+
+    // Settings counts
+    this.settingsDecksCount = document.getElementById('settingsDecksCount');
+    this.settingsCardsCount = document.getElementById('settingsCardsCount');
   }
 
   bindEvents() {
-    if (this.brandLogo) {
-      this.brandLogo.addEventListener('click', () => this.switchView('dashboard'));
-    }
+    // Tab Switching
+    if (this.tabDecks) this.tabDecks.addEventListener('click', () => this.switchTab('decks'));
+    if (this.tabFlashcards) this.tabFlashcards.addEventListener('click', () => this.switchTab('flashcards'));
+    if (this.tabLearn) this.tabLearn.addEventListener('click', () => this.switchTab('learn'));
+    if (this.tabMatch) this.tabMatch.addEventListener('click', () => this.switchTab('match'));
+    if (this.tabSettings) this.tabSettings.addEventListener('click', () => this.switchTab('settings'));
 
-    if (this.btnNewSet) {
-      this.btnNewSet.addEventListener('click', () => {
-        this.editor.openNewSet();
-        this.switchView('editor');
+    // Header Actions
+    if (this.headerNewBtn) {
+      this.headerNewBtn.addEventListener('click', () => {
+        this.editor.openNew();
+        this.switchTab('editor');
       });
     }
 
-    if (this.navTabFlashcards) {
-      this.navTabFlashcards.addEventListener('click', () => {
-        if (this.activeSetId) this.switchView('flashcards', this.activeSetId);
+    if (this.emptyNewBtn) {
+      this.emptyNewBtn.addEventListener('click', () => {
+        this.editor.openNew();
+        this.switchTab('editor');
       });
     }
 
-    if (this.navTabLearn) {
-      this.navTabLearn.addEventListener('click', () => {
-        if (this.activeSetId) this.switchView('learn', this.activeSetId);
+    // Quick Actions
+    if (this.quickActionStudy) {
+      this.quickActionStudy.addEventListener('click', () => {
+        if (this.activeSetId) {
+          this.switchTab('flashcards');
+        } else {
+          this.toast('Select a deck to study');
+        }
       });
     }
 
-    if (this.navTabMatch) {
-      this.navTabMatch.addEventListener('click', () => {
-        if (this.activeSetId) this.switchView('match', this.activeSetId);
+    if (this.quickActionImport) {
+      this.quickActionImport.addEventListener('click', () => {
+        this.editor.openImportModal();
       });
     }
 
-    // "Back to Sets" buttons in each study mode
-    document.querySelectorAll('.back-to-sets-btn').forEach(btn => {
-      btn.addEventListener('click', () => this.switchView('dashboard'));
-    });
+    // Search filter
+    if (this.searchInput) {
+      this.searchInput.addEventListener('input', () => {
+        this.renderDecksList(this.searchInput.value.trim().toLowerCase());
+      });
+    }
   }
 
-  renderDashboard() {
-    if (!this.setsGrid) return;
+  updateHeaderStats() {
     const sets = this.storage.getAllSets();
+    const totalDecks = sets.length;
+    const totalCards = sets.reduce((acc, s) => acc + (s.terms ? s.terms.length : 0), 0);
 
-    this.setsGrid.innerHTML = sets.map(set => {
-      const termCount = set.terms ? set.terms.length : 0;
-      const bestTime = this.storage.getBestMatchTime(set.id);
-      const bestTimeBadge = bestTime !== null ? `⏱️ Best: ${bestTime.toFixed(1)}s` : '';
+    if (this.headerSubtitle) {
+      this.headerSubtitle.textContent = `${totalDecks} decks • ${totalCards} cards`;
+    }
+
+    if (this.settingsDecksCount) this.settingsDecksCount.textContent = totalDecks;
+    if (this.settingsCardsCount) this.settingsCardsCount.textContent = totalCards;
+  }
+
+  renderDecksList(query = '') {
+    if (!this.decksList) return;
+    const allSets = this.storage.getAllSets();
+
+    const filtered = allSets.filter(s => {
+      if (!query) return true;
+      const titleMatch = s.title.toLowerCase().includes(query);
+      const descMatch = (s.description || '').toLowerCase().includes(query);
+      const termMatch = s.terms && s.terms.some(t => t.term.toLowerCase().includes(query) || t.definition.toLowerCase().includes(query));
+      return titleMatch || descMatch || termMatch;
+    });
+
+    if (allSets.length === 0) {
+      this.emptyDecks.style.display = 'flex';
+      this.decksList.style.display = 'none';
+      return;
+    } else {
+      this.emptyDecks.style.display = 'none';
+      this.decksList.style.display = 'flex';
+    }
+
+    this.decksList.innerHTML = filtered.map(set => {
+      const cardCount = set.terms ? set.terms.length : 0;
+      const best = this.storage.getBestMatchTime(set.id);
+      const bestBadge = best !== null ? ` • Match: ${best.toFixed(1)}s` : '';
+      const isSelected = set.id === this.activeSetId;
 
       return `
-        <div class="set-card" data-set-id="${set.id}">
-          <div class="set-card-header">
-            <h3 class="set-title">${this.escapeHtml(set.title)}</h3>
-            <p class="set-desc">${this.escapeHtml(set.description || 'No description provided.')}</p>
+        <div class="deck-item" data-id="${set.id}" style="${isSelected ? 'background: var(--bg-surface); padding-left: 8px; padding-right: 8px; border-radius: 6px;' : ''}">
+          <div class="deck-info">
+            <div class="deck-title">${this.escapeHtml(set.title)}</div>
+            <div class="deck-subtitle">${cardCount} cards${bestBadge}</div>
           </div>
-          <div>
-            <div class="set-meta">
-              <span>${termCount} cards</span>
-              <span>${bestTimeBadge}</span>
-            </div>
-            <div class="set-card-actions">
-              <button class="btn btn-primary btn-sm study-deck-btn" data-set-id="${set.id}">Study</button>
-              <button class="btn btn-secondary btn-sm edit-deck-btn" data-set-id="${set.id}" title="Edit Set">✏️</button>
-              <button class="btn btn-secondary btn-sm export-deck-btn" data-set-id="${set.id}" title="Copy to Clipboard">📋</button>
-              <button class="btn btn-danger btn-sm delete-deck-btn" data-set-id="${set.id}" title="Delete Set">🗑️</button>
-            </div>
+          <div class="deck-actions">
+            <button class="icon-btn study-btn" title="Study">Study</button>
+            <button class="icon-btn edit-btn" title="Edit">✏️</button>
+            <button class="icon-btn copy-btn" title="Copy Terms">📋</button>
+            <button class="icon-btn delete-btn" title="Delete" style="color: var(--danger);">🗑️</button>
           </div>
         </div>
       `;
     }).join('');
 
-    // Bind card action buttons
-    this.setsGrid.querySelectorAll('.study-deck-btn').forEach(btn => {
-      btn.addEventListener('click', () => this.switchView('flashcards', btn.dataset.setId));
-    });
+    // Attach row events
+    this.decksList.querySelectorAll('.deck-item').forEach(item => {
+      const setId = item.dataset.id;
 
-    this.setsGrid.querySelectorAll('.edit-deck-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        this.editor.openEditSet(btn.dataset.setId);
-        this.switchView('editor');
+      item.querySelector('.deck-info').addEventListener('click', () => {
+        this.activeSetId = setId;
+        this.switchTab('flashcards');
       });
-    });
 
-    this.setsGrid.querySelectorAll('.export-deck-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const text = this.storage.exportSetAsTSV(btn.dataset.setId);
+      item.querySelector('.study-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.activeSetId = setId;
+        this.switchTab('flashcards');
+      });
+
+      item.querySelector('.edit-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.editor.openEdit(setId);
+        this.switchTab('editor');
+      });
+
+      item.querySelector('.copy-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const text = this.storage.exportSetAsTSV(setId);
         navigator.clipboard.writeText(text).then(() => {
-          alert('Study set terms copied to clipboard in Quizlet format!');
+          this.toast('Terms copied to clipboard');
         });
       });
-    });
 
-    this.setsGrid.querySelectorAll('.delete-deck-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const set = this.storage.getSet(btn.dataset.setId);
-        if (confirm(`Are you sure you want to delete "${set.title}"?`)) {
-          this.storage.deleteSet(btn.dataset.setId);
-          this.renderDashboard();
+      item.querySelector('.delete-btn').addEventListener('click', (e) => {
+        e.stopPropagation();
+        const set = this.storage.getSet(setId);
+        if (confirm(`Delete "${set.title}"?`)) {
+          this.storage.deleteSet(setId);
+          if (this.activeSetId === setId) {
+            const remaining = this.storage.getAllSets();
+            this.activeSetId = remaining.length > 0 ? remaining[0].id : null;
+          }
+          this.renderDecksList();
+          this.updateHeaderStats();
+          this.toast('Deck deleted');
         }
       });
     });
+
+    this.updateHeaderStats();
   }
 
-  switchView(viewName, setId = null) {
-    this.currentView = viewName;
-    if (setId) this.activeSetId = setId;
+  switchTab(tabName) {
+    this.currentTab = tabName;
 
-    // Toggle nav tabs visibility based on whether a set is active
-    if (this.navTabsWrap) {
-      this.navTabsWrap.style.display = (viewName === 'dashboard' || viewName === 'editor') ? 'none' : 'flex';
-    }
-
-    // Update active nav tab
-    [this.navTabFlashcards, this.navTabLearn, this.navTabMatch].forEach(tab => {
+    // Update active tab buttons
+    [this.tabDecks, this.tabFlashcards, this.tabLearn, this.tabMatch, this.tabSettings].forEach(tab => {
       if (tab) tab.classList.remove('active');
     });
 
-    if (viewName === 'flashcards' && this.navTabFlashcards) this.navTabFlashcards.classList.add('active');
-    if (viewName === 'learn' && this.navTabLearn) this.navTabLearn.classList.add('active');
-    if (viewName === 'match' && this.navTabMatch) this.navTabMatch.classList.add('active');
+    if (tabName === 'decks' && this.tabDecks) this.tabDecks.classList.add('active');
+    if (tabName === 'flashcards' && this.tabFlashcards) this.tabFlashcards.classList.add('active');
+    if (tabName === 'learn' && this.tabLearn) this.tabLearn.classList.add('active');
+    if (tabName === 'match' && this.tabMatch) this.tabMatch.classList.add('active');
+    if (tabName === 'settings' && this.tabSettings) this.tabSettings.classList.add('active');
 
     // Hide all views
-    [this.viewDashboard, this.viewFlashcards, this.viewLearn, this.viewMatch, this.viewEditor].forEach(view => {
-      if (view) view.classList.remove('active');
+    [this.decksView, this.flashcardsView, this.learnView, this.matchView, this.settingsView, this.editorView].forEach(v => {
+      if (v) v.style.display = 'none';
     });
 
-    // Update top title badges for study views
-    if (this.activeSetId && (viewName === 'flashcards' || viewName === 'learn' || viewName === 'match')) {
-      const activeSet = this.storage.getSet(this.activeSetId);
-      if (activeSet) {
-        document.querySelectorAll('.activeDeckTitle').forEach(el => el.textContent = activeSet.title);
-        document.querySelectorAll('.activeDeckCount').forEach(el => el.textContent = `${activeSet.terms.length} cards`);
+    // Ensure we have an active deck when entering study tabs
+    if (!this.activeSetId && (tabName === 'flashcards' || tabName === 'learn' || tabName === 'match')) {
+      const sets = this.storage.getAllSets();
+      if (sets.length > 0) {
+        this.activeSetId = sets[0].id;
       }
     }
 
-    // Show selected view
-    switch (viewName) {
-      case 'dashboard':
-        if (this.viewDashboard) this.viewDashboard.classList.add('active');
-        this.renderDashboard();
+    // Show active view
+    switch (tabName) {
+      case 'decks':
+        if (this.decksView) this.decksView.style.display = 'block';
         this.flashcards.detachKeyboard();
         this.match.stopTimer();
+        this.renderDecksList();
         break;
 
       case 'flashcards':
-        if (this.viewFlashcards) this.viewFlashcards.classList.add('active');
+        if (this.flashcardsView) this.flashcardsView.style.display = 'block';
         this.match.stopTimer();
-        this.flashcards.loadSet(this.activeSetId);
+        if (this.activeSetId) this.flashcards.loadSet(this.activeSetId);
         break;
 
       case 'learn':
-        if (this.viewLearn) this.viewLearn.classList.add('active');
+        if (this.learnView) this.learnView.style.display = 'block';
         this.flashcards.detachKeyboard();
         this.match.stopTimer();
-        this.learn.loadSet(this.activeSetId);
+        if (this.activeSetId) this.learn.loadSet(this.activeSetId);
         break;
 
       case 'match':
-        if (this.viewMatch) this.viewMatch.classList.add('active');
+        if (this.matchView) this.matchView.style.display = 'block';
         this.flashcards.detachKeyboard();
-        this.match.loadSet(this.activeSetId);
+        if (this.activeSetId) this.match.loadSet(this.activeSetId);
+        break;
+
+      case 'settings':
+        if (this.settingsView) this.settingsView.style.display = 'block';
+        this.flashcards.detachKeyboard();
+        this.match.stopTimer();
+        this.updateHeaderStats();
         break;
 
       case 'editor':
-        if (this.viewEditor) this.viewEditor.classList.add('active');
+        if (this.editorView) this.editorView.style.display = 'block';
         this.flashcards.detachKeyboard();
         this.match.stopTimer();
         break;
     }
 
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    const mainContent = document.getElementById('mainContent');
+    if (mainContent) mainContent.scrollTop = 0;
   }
 
   escapeHtml(str) {
@@ -228,7 +327,6 @@ class App {
   }
 }
 
-// Boot application when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   window.app = new App();
 });

@@ -1,321 +1,358 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="mocha">
+<html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>no-movies-quizlet | Minimalistic Study Companion</title>
-  <meta name="description" content="A distraction-free Quizlet copy featuring Flashcards, Learn, and Match modes in Catppuccin and Classic Dark pastel themes." />
-  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg" />
-  <link rel="stylesheet" href="css/themes.css" />
-  <link rel="stylesheet" href="css/styles.css" />
+  <meta charset="UTF-8">
+  <title>Quizlet</title>
+  
+  <!-- iOS PWA Configuration -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Quizlet">
+  <meta name="theme-color" content="#0a0a0a">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="icons/favicon.svg">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/themes.css">
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Immediate Theme Initialization to avoid flash -->
+  <script>
+    (function() {
+      try {
+        var savedTheme = localStorage.getItem('no_movies_quizlet_theme') || 'classic-dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        var themeColors = {
+          'classic-dark': '#0a0a0a',
+          'latte': '#eff1f5',
+          'frappe': '#303446',
+          'macchiato': '#24273a',
+          'mocha': '#1e1e2e'
+        };
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta && themeColors[savedTheme]) {
+          meta.setAttribute('content', themeColors[savedTheme]);
+        }
+      } catch (e) {}
+    })();
+  </script>
 </head>
 <body>
-
-  <!-- Top App Navigation Bar -->
-  <header class="app-header">
-    <div class="header-inner">
-      <div class="brand-section" id="brandLogo" title="Back to Dashboard">
-        <div class="brand-logo">Q</div>
-        <div class="brand-title">no-movies-quizlet</div>
-        <span class="brand-tag">Minimal</span>
+  <div id="app">
+    <!-- Header (Matching netanyahu-s-final-order) -->
+    <header class="app-header">
+      <div class="header-title-group">
+        <h1 id="appHeaderTitle">Quizlet</h1>
+        <div class="header-subtitle" id="appHeaderSubtitle">3 decks • 36 cards</div>
       </div>
-
-      <!-- Study Mode Tabs (Visible when studying a set) -->
-      <nav class="nav-tabs" id="navTabsWrap" style="display: none;">
-        <button class="nav-tab active" id="navTabFlashcards">
-          <span>🎴</span> Flashcards
-        </button>
-        <button class="nav-tab" id="navTabLearn">
-          <span>🧠</span> Learn
-        </button>
-        <button class="nav-tab" id="navTabMatch">
-          <span>⏱️</span> Match
-        </button>
-      </nav>
-
-      <!-- Right Header Actions -->
       <div class="header-actions">
-        <button class="btn btn-primary" id="headerBtnNewSet">
-          <span>+</span> Create Set
-        </button>
-
-        <!-- Theme Picker Dropdown -->
-        <div class="theme-picker-container">
-          <button class="theme-btn" id="themeToggleBtn" title="Change Theme Palette">
-            <div class="theme-palette-preview" id="themePreviewDots"></div>
-            <span id="currentThemeName">Mocha</span>
-            <span style="font-size: 0.7rem; opacity: 0.7;">▼</span>
-          </button>
-          <div class="theme-dropdown" id="themeDropdown"></div>
-        </div>
+        <button class="upload-btn" id="headerNewBtn">+ New</button>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- Main View Container -->
-  <main class="main-container">
-
-    <!-- 1. DASHBOARD VIEW (SETS OVERVIEW) -->
-    <section class="view-section active" id="viewDashboard">
-      <div class="dashboard-header">
-        <div class="dash-heading">
-          <h1>Study Sets</h1>
-          <p>Select a deck to begin flashcards, adaptive learn, or timed match.</p>
-        </div>
-      </div>
-      <div class="sets-grid" id="setsGrid">
-        <!-- Dynamically rendered by app.js -->
-      </div>
-    </section>
-
-    <!-- 2. FLASHCARDS VIEW -->
-    <section class="view-section" id="viewFlashcards">
-      <div class="study-topbar">
-        <div class="study-title-group">
-          <button class="btn btn-secondary btn-sm back-to-sets-btn">← Sets</button>
-          <span class="deck-badge-title activeDeckTitle">Deck Title</span>
-          <span class="deck-count-pill activeDeckCount">0 cards</span>
-        </div>
-        <div class="fc-filters">
-          <button class="filter-btn active" id="fcFilterAll">All</button>
-          <button class="filter-btn" id="fcFilterStarred">★ Starred</button>
-          <button class="btn btn-ghost btn-sm" id="fcSwapSidesBtn" title="Swap Front & Back">⇄ Swap (Term first)</button>
-          <button class="btn btn-ghost btn-sm" id="fcShuffleBtn" title="Shuffle Deck">🔀 Shuffle</button>
-        </div>
+    <!-- Main Content Area -->
+    <main class="main-content" id="mainContent">
+      <!-- Tabs (Matching netanyahu-s-final-order) -->
+      <div class="tab-bar">
+        <button class="tab-btn active" id="tabDecks">Decks</button>
+        <button class="tab-btn" id="tabFlashcards">Flashcards</button>
+        <button class="tab-btn" id="tabLearn">Learn</button>
+        <button class="tab-btn" id="tabMatch">Match</button>
+        <button class="tab-btn" id="tabSettings">Settings</button>
       </div>
 
-      <div class="flashcards-wrapper">
-        <!-- 3D Perspective Card Stage -->
-        <div class="flashcard-stage" id="fcStage">
-          <div class="flashcard-inner" id="fcCardInner">
-            
+      <!-- 1. DECKS VIEW -->
+      <div id="decksView">
+        <!-- Search Bar -->
+        <div class="search-container">
+          <input type="text" class="search-input" id="searchInput" placeholder="Search decks or terms...">
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <button class="action-btn" id="quickActionStudy">Study Selected</button>
+          <button class="action-btn" id="quickActionImport">Import</button>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-library" id="emptyDecks" style="display: none;">
+          <p>No study decks yet.</p>
+          <button class="upload-btn" id="emptyNewBtn">+ Create Deck</button>
+        </div>
+
+        <!-- Deck List -->
+        <div class="track-list" id="decksList"></div>
+      </div>
+
+      <!-- 2. FLASHCARDS VIEW -->
+      <div id="flashcardsView" style="display: none;">
+        <div class="study-subnav">
+          <div class="subnav-left">
+            <span class="deck-pill" id="fcDeckTitle">Deck Title</span>
+            <span class="deck-sub-pill" id="fcDeckCount">0 cards</span>
+          </div>
+          <div style="display: flex; gap: 4px;">
+            <button class="action-btn" id="fcSwapSides" style="padding: 4px 8px; font-size: 11px;">⇄ Swap</button>
+            <button class="action-btn" id="fcShuffle" style="padding: 4px 8px; font-size: 11px;">🔀 Shuffle</button>
+            <button class="action-btn" id="fcStarredOnly" style="padding: 4px 8px; font-size: 11px;">★ Starred</button>
+          </div>
+        </div>
+
+        <!-- Minimal 3D Flashcard Stage -->
+        <div class="fc-stage-box" id="fcStage">
+          <div class="fc-card" id="fcCardInner">
             <!-- Front Face -->
-            <div class="fc-face fc-face-front">
-              <div class="fc-card-header">
-                <span class="fc-badge" id="fcFrontBadge">TERM</span>
-                <button class="fc-star-btn" id="fcStarBtn" title="Star Card (S)">☆</button>
+            <div class="fc-side fc-side-front">
+              <div class="fc-top-row">
+                <span class="fc-type-tag" id="fcFrontTag">TERM</span>
+                <button class="fc-star-icon" id="fcStarBtn">☆</button>
               </div>
-              <div class="fc-content">
-                <div class="fc-text" id="fcFrontText">Term goes here</div>
-              </div>
-              <div class="fc-hint-footer">Click or press Space to flip</div>
+              <div class="fc-center-text" id="fcFrontText">Term</div>
+              <div class="fc-footer-hint">Tap card or press Space to flip</div>
             </div>
 
             <!-- Back Face -->
-            <div class="fc-face fc-face-back">
-              <div class="fc-card-header">
-                <span class="fc-badge" id="fcBackBadge">DEFINITION</span>
+            <div class="fc-side fc-side-back">
+              <div class="fc-top-row">
+                <span class="fc-type-tag" id="fcBackTag">DEFINITION</span>
                 <div></div>
               </div>
-              <div class="fc-content">
-                <div class="fc-text" id="fcBackText">Definition goes here</div>
-              </div>
-              <div class="fc-hint-footer">Click or press Space to flip</div>
-            </div>
-
-          </div>
-        </div>
-
-        <!-- Navigation Controls -->
-        <div class="fc-controls">
-          <button class="btn btn-secondary" id="fcPrevBtn">← Previous</button>
-          
-          <div class="fc-progress-group">
-            <span id="fcCounter">1 / 1</span>
-            <div class="fc-progress-bar-wrap">
-              <div class="fc-progress-bar-fill" id="fcProgressFill" style="width: 10%;"></div>
+              <div class="fc-center-text" id="fcBackText">Definition</div>
+              <div class="fc-footer-hint">Tap card or press Space to flip</div>
             </div>
           </div>
-
-          <button class="btn btn-secondary" id="fcNextBtn">Next →</button>
         </div>
 
-        <!-- Keyboard Shortcuts Helper -->
-        <div class="keyboard-hints">
-          <span><span class="kb-pill">Space</span> Flip</span>
-          <span><span class="kb-pill">← / →</span> Navigate</span>
-          <span><span class="kb-pill">S</span> Star</span>
-          <span><span class="kb-pill">R</span> Shuffle</span>
-          <span><span class="kb-pill">F</span> Swap Sides</span>
+        <!-- Controls -->
+        <div class="fc-nav-controls">
+          <button class="fc-btn" id="fcPrev">← Prev</button>
+          <span class="fc-counter-wrap" id="fcCounter">1 / 12</span>
+          <button class="fc-btn" id="fcNext">Next →</button>
         </div>
-      </div>
-    </section>
 
-    <!-- 3. LEARN VIEW -->
-    <section class="view-section" id="viewLearn">
-      <div class="study-topbar">
-        <div class="study-title-group">
-          <button class="btn btn-secondary btn-sm back-to-sets-btn">← Sets</button>
-          <span class="deck-badge-title activeDeckTitle">Deck Title</span>
-        </div>
-        <div class="learn-mode-toggle">
-          <button class="mode-toggle-btn active" id="learnToggleMc">Multiple Choice</button>
-          <button class="mode-toggle-btn" id="learnToggleWritten">Write / Type</button>
+        <div class="fc-shortcuts-note">
+          Space: Flip • Arrows: Navigate • S: Star • R: Shuffle
         </div>
       </div>
 
-      <div class="learn-wrapper">
-        <!-- Progress stats bar -->
-        <div class="learn-stats-header">
-          <div class="learn-stat-item">
-            <span class="stat-label">Mastered</span>
-            <span class="stat-value" id="learnStatMastered" style="color: var(--success);">0</span>
+      <!-- 3. LEARN VIEW -->
+      <div id="learnView" style="display: none;">
+        <div class="study-subnav">
+          <div class="subnav-left">
+            <span class="deck-pill" id="learnDeckTitle">Deck Title</span>
           </div>
-          <div class="learn-stat-item">
-            <span class="stat-label">Remaining</span>
-            <span class="stat-value" id="learnStatRemaining" style="color: var(--warning);">0</span>
-          </div>
-          <div class="learn-stat-item">
-            <span class="stat-label">Total Terms</span>
-            <span class="stat-value" id="learnStatTotal">0</span>
-          </div>
+          <button class="action-btn" id="learnToggleMode" style="padding: 4px 10px; font-size: 11px;">Mode: Multiple Choice</button>
         </div>
 
-        <!-- Prompt Card -->
-        <div class="learn-card">
-          <div class="learn-prompt-tag">QUESTION</div>
-          <div class="learn-prompt-text" id="learnPromptText">Term to be tested</div>
+        <div class="learn-status-bar">
+          <span>Mastered: <strong id="learnMasteredCount" style="color: var(--success);">0</strong></span>
+          <span>Remaining: <strong id="learnRemainingCount" style="color: var(--warning);">0</strong></span>
+          <span>Total: <strong id="learnTotalCount">0</strong></span>
         </div>
 
-        <!-- Multiple Choice Mode Container -->
-        <div class="mc-options-grid" id="learnMcContainer">
-          <!-- Dynamically populated 4 options -->
+        <div class="learn-prompt-box">
+          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; margin-bottom: 6px;">Question</div>
+          <div class="learn-prompt-title" id="learnPrompt">Prompt</div>
         </div>
 
-        <!-- Written Answer Mode Container -->
-        <div class="written-form" id="learnWrittenContainer" style="display: none;">
-          <input type="text" class="written-input" id="learnWrittenInput" placeholder="Type the answer here..." autocomplete="off" />
-          <button class="btn btn-primary" id="learnWrittenSubmit">Submit Answer (Enter)</button>
+        <!-- Multiple Choice Mode -->
+        <div class="mc-grid" id="learnMcGrid"></div>
+
+        <!-- Written Answer Mode -->
+        <div class="written-wrap" id="learnWrittenWrap" style="display: none;">
+          <input type="text" class="written-box" id="learnWrittenInput" placeholder="Type answer here..." autocomplete="off">
+          <button class="action-btn primary" id="learnWrittenSubmit">Submit (Enter)</button>
         </div>
 
-        <!-- Feedback Banner -->
-        <div class="learn-feedback-banner" id="learnFeedbackBanner">
-          <div class="feedback-headline" id="learnFeedbackHeadline"></div>
-          <div class="feedback-details" id="learnFeedbackDetails"></div>
-          <div style="margin-top: 0.5rem;">
-            <button class="btn btn-primary btn-sm" id="learnFeedbackContinue">Continue (Enter)</button>
-          </div>
+        <!-- Feedback -->
+        <div class="learn-feedback" id="learnFeedback">
+          <div id="learnFeedbackText" style="font-weight: 600; margin-bottom: 4px;"></div>
+          <div id="learnFeedbackDetail"></div>
+          <button class="action-btn" id="learnFeedbackContinue" style="margin-top: 8px; display: none;">Continue (Enter)</button>
         </div>
       </div>
 
-      <!-- Learn Victory Modal -->
-      <div class="modal-overlay" id="learnSummaryModal">
-        <div class="modal-card" style="text-align: center;">
-          <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">🎉</h2>
-          <h3 class="modal-title" style="margin-bottom: 0.5rem;">Deck Mastered!</h3>
-          <p id="learnSummaryScore" style="color: var(--text-muted); margin-bottom: 1.5rem; font-size: 1.1rem;"></p>
-          <div style="display: flex; gap: 0.75rem; justify-content: center;">
-            <button class="btn btn-primary" id="learnRestartBtn">Study Again</button>
-            <button class="btn btn-secondary back-to-sets-btn">Back to Sets</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 4. MATCH VIEW -->
-    <section class="view-section" id="viewMatch">
-      <div class="study-topbar">
-        <div class="study-title-group">
-          <button class="btn btn-secondary btn-sm back-to-sets-btn">← Sets</button>
-          <span class="deck-badge-title activeDeckTitle">Deck Title</span>
-        </div>
-      </div>
-
-      <div class="match-wrapper">
-        <div class="match-header-bar">
+      <!-- 4. MATCH VIEW -->
+      <div id="matchView" style="display: none;">
+        <div class="match-top-status">
           <div>
-            <span style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Timer</span>
-            <div class="match-stopwatch" id="matchStopwatch">0.0s</div>
+            <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; display: block;">Time</span>
+            <span class="match-clock" id="matchClock">0.0s</span>
           </div>
-          <div style="display: flex; align-items: center; gap: 1rem;">
-            <span id="matchBestRecord" style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">Best: --</span>
-            <button class="btn btn-secondary btn-sm" id="matchRestartBtn">↺ Restart</button>
+          <span id="matchBestLabel" style="font-size: 12px; color: var(--text-secondary);">Best: --</span>
+          <button class="upload-btn" id="matchRestart" style="padding: 4px 10px; font-size: 12px;">↺ Restart</button>
+        </div>
+
+        <div class="match-tiles-matrix" id="matchMatrix"></div>
+      </div>
+
+      <!-- 5. SETTINGS VIEW (Matches netanyahu-s-final-order layout) -->
+      <div id="settingsView" class="settings-view" style="display: none;">
+        <div class="settings-group">
+          <div class="settings-group-title">Theme & Color Palette</div>
+          <div class="theme-options-grid">
+            
+            <button class="theme-card active" data-theme="classic-dark">
+              <div class="theme-card-left">
+                <div class="theme-palette-preview">
+                  <span class="palette-dot" style="background: #0a0a0a;"></span>
+                  <span class="palette-dot" style="background: #141414;"></span>
+                  <span class="palette-dot" style="background: #3b82f6;"></span>
+                  <span class="palette-dot" style="background: #ffffff;"></span>
+                </div>
+                <div class="theme-card-info">
+                  <div class="theme-card-name">Classic Dark</div>
+                  <div class="theme-card-desc">Pitch black OLED theme with electric blue accents</div>
+                </div>
+              </div>
+              <span class="theme-check">✓</span>
+            </button>
+
+            <button class="theme-card" data-theme="latte">
+              <div class="theme-card-left">
+                <div class="theme-palette-preview">
+                  <span class="palette-dot" style="background: #eff1f5;"></span>
+                  <span class="palette-dot" style="background: #e6e9ef;"></span>
+                  <span class="palette-dot" style="background: #1e66f5;"></span>
+                  <span class="palette-dot" style="background: #4c4f69;"></span>
+                </div>
+                <div class="theme-card-info">
+                  <div class="theme-card-name">Catppuccin Latte</div>
+                  <div class="theme-card-desc">Light, crisp pastel daylight palette</div>
+                </div>
+              </div>
+              <span class="theme-check">✓</span>
+            </button>
+
+            <button class="theme-card" data-theme="frappe">
+              <div class="theme-card-left">
+                <div class="theme-palette-preview">
+                  <span class="palette-dot" style="background: #303446;"></span>
+                  <span class="palette-dot" style="background: #292c3c;"></span>
+                  <span class="palette-dot" style="background: #8caaee;"></span>
+                  <span class="palette-dot" style="background: #c6d0f5;"></span>
+                </div>
+                <div class="theme-card-info">
+                  <div class="theme-card-name">Catppuccin Frappé</div>
+                  <div class="theme-card-desc">Medium-dark muted soothing pastel</div>
+                </div>
+              </div>
+              <span class="theme-check">✓</span>
+            </button>
+
+            <button class="theme-card" data-theme="macchiato">
+              <div class="theme-card-left">
+                <div class="theme-palette-preview">
+                  <span class="palette-dot" style="background: #24273a;"></span>
+                  <span class="palette-dot" style="background: #1e2030;"></span>
+                  <span class="palette-dot" style="background: #8aadf4;"></span>
+                  <span class="palette-dot" style="background: #cad3f5;"></span>
+                </div>
+                <div class="theme-card-info">
+                  <div class="theme-card-name">Catppuccin Macchiato</div>
+                  <div class="theme-card-desc">Smooth dark pastel with blue/lavender accents</div>
+                </div>
+              </div>
+              <span class="theme-check">✓</span>
+            </button>
+
+            <button class="theme-card" data-theme="mocha">
+              <div class="theme-card-left">
+                <div class="theme-palette-preview">
+                  <span class="palette-dot" style="background: #1e1e2e;"></span>
+                  <span class="palette-dot" style="background: #181825;"></span>
+                  <span class="palette-dot" style="background: #89b4fa;"></span>
+                  <span class="palette-dot" style="background: #cdd6f4;"></span>
+                </div>
+                <div class="theme-card-info">
+                  <div class="theme-card-name">Catppuccin Mocha</div>
+                  <div class="theme-card-desc">Deep cozy dark pastel with mocha accents</div>
+                </div>
+              </div>
+              <span class="theme-check">✓</span>
+            </button>
+
           </div>
         </div>
 
-        <!-- Tile Grid -->
-        <div class="match-grid" id="matchGrid">
-          <!-- Dynamically populated 12 tiles -->
+        <div class="settings-group">
+          <div class="settings-group-title">Storage & Information</div>
+          <div class="settings-card">
+            <div class="settings-item">
+              <span class="settings-label">Study Decks</span>
+              <span class="settings-value" id="settingsDecksCount">3</span>
+            </div>
+            <div class="settings-item">
+              <span class="settings-label">Total Cards</span>
+              <span class="settings-value" id="settingsCardsCount">36</span>
+            </div>
+            <div class="settings-item">
+              <span class="settings-label">App Mode</span>
+              <span class="settings-value">100% Offline PWA</span>
+            </div>
+            <div class="settings-item">
+              <span class="settings-label">Version</span>
+              <span class="settings-value">v1.2 Minimal</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="storage-status">
+          100% Offline • Local Storage
         </div>
       </div>
 
-      <!-- Match Victory Modal -->
-      <div class="modal-overlay" id="matchVictoryModal">
-        <div class="modal-card" style="text-align: center;">
-          <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">⚡</h2>
-          <h3 class="modal-title" style="margin-bottom: 0.5rem;">All Matched!</h3>
-          <p style="color: var(--text-muted); margin-bottom: 0.5rem;">You cleared the board in</p>
-          <div style="font-size: 2.25rem; font-weight: 800; font-family: var(--font-mono); color: var(--accent); margin-bottom: 0.5rem;" id="matchFinalTime">0.0s</div>
-          <div id="matchRecordBadge" style="display: none; background-color: var(--warning-subtle); color: var(--warning); padding: 0.25rem 0.75rem; border-radius: 9999px; font-weight: 700; font-size: 0.85rem; margin-bottom: 1.5rem; display: inline-block;">
-            🏆 New Personal Record!
-          </div>
-          <div style="display: flex; gap: 0.75rem; justify-content: center; margin-top: 1rem;">
-            <button class="btn btn-primary" id="matchPlayAgainBtn">Play Again</button>
-            <button class="btn btn-secondary back-to-sets-btn">Back to Sets</button>
+      <!-- 6. EDITOR VIEW -->
+      <div id="editorView" style="display: none;">
+        <div class="study-subnav">
+          <span class="deck-pill" id="editorHeaderTitle">New Study Set</span>
+          <div style="display: flex; gap: 6px;">
+            <button class="action-btn" id="editorCancelBtn">Cancel</button>
+            <button class="action-btn primary" id="editorSaveBtn">Save</button>
           </div>
         </div>
-      </div>
-    </section>
 
-    <!-- 5. SET CREATOR & EDITOR VIEW -->
-    <section class="view-section" id="viewEditor">
-      <div class="study-topbar">
-        <div class="study-title-group">
-          <button class="btn btn-secondary btn-sm" id="editorCancelBtn">← Cancel</button>
-          <h2 style="font-size: 1.35rem; font-weight: 700;">Set Editor</h2>
-        </div>
-        <div>
-          <button class="btn btn-secondary btn-sm" id="editorQuickImportBtn">📥 Import from Text</button>
-          <button class="btn btn-primary btn-sm" id="editorSaveBtn">Save Set</button>
-        </div>
-      </div>
-
-      <div class="editor-wrapper">
-        <div class="editor-form-card">
-          <div class="form-group">
+        <div class="editor-form">
+          <div class="form-field">
             <label class="form-label">Set Title</label>
-            <input type="text" class="form-input" id="editorTitle" placeholder="e.g. SAT Biology Vocabulary" required />
+            <input type="text" class="form-input" id="editorTitle" placeholder="Title...">
           </div>
-          <div class="form-group">
+          <div class="form-field">
             <label class="form-label">Description (Optional)</label>
-            <textarea class="form-textarea" id="editorDesc" rows="2" placeholder="Brief summary of what this set covers..."></textarea>
+            <input type="text" class="form-input" id="editorDesc" placeholder="Description...">
           </div>
-
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 1.5rem;">
-            <label class="form-label" style="margin-bottom: 0;">Terms & Definitions</label>
-            <button type="button" class="btn btn-secondary btn-sm" id="editorAddRowBtn">+ Add Card</button>
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+            <span class="form-label">Cards</span>
+            <button class="upload-btn" id="editorAddCardBtn" style="padding: 4px 10px; font-size: 12px;">+ Add Card</button>
           </div>
-
-          <!-- Dynamic Term Rows -->
-          <div class="term-rows-list" id="editorTermRows">
-            <!-- Dynamically injected -->
-          </div>
+          <div class="editor-cards-list" id="editorCardsList"></div>
         </div>
       </div>
-    </section>
+    </main>
 
-  </main>
+    <!-- Modal: Quick Import -->
+    <div class="modal-overlay" id="importModal">
+      <div class="modal-card">
+        <h3>Import Study Set</h3>
+        <p style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px;">
+          Paste terms & definitions separated by tabs, commas, or dashes (Quizlet format).
+        </p>
+        <textarea class="form-input" id="importInput" rows="6" style="width: 100%; resize: vertical;" placeholder="Term	Definition&#10;Term 2	Definition 2"></textarea>
+        <div class="modal-actions">
+          <button class="modal-btn" id="importModalCancel">Cancel</button>
+          <button class="modal-btn confirm" id="importModalConfirm">Import</button>
+        </div>
+      </div>
+    </div>
 
-  <!-- Quick Import Modal -->
-  <div class="modal-overlay" id="quickImportModal">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3 class="modal-title">Quick Import</h3>
-        <button class="btn btn-ghost btn-sm" id="importCancelBtn">✕</button>
-      </div>
-      <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem; line-height: 1.4;">
-        Paste your terms and definitions below. Separate terms and definitions with tabs, commas, or dashes (e.g. copied directly from Quizlet export format).
-      </p>
-      <div class="form-group">
-        <textarea class="form-textarea" id="importTextarea" rows="8" placeholder="Ephemeral	Fleeting or short-lived&#10;Ubiquitous	Found everywhere"></textarea>
-      </div>
-      <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
-        <button class="btn btn-primary" id="importSubmitBtn">Import Cards</button>
-      </div>
+    <!-- Notification Toast -->
+    <div class="toast" id="toast">
+      <span id="toastMessage">Done</span>
     </div>
   </div>
 
-  <!-- Main ES Module Bootstrapper -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

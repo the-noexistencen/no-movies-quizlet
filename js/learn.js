@@ -1,14 +1,14 @@
 // ==========================================================================
-// Learn Feature (Adaptive Spaced Repetition, Multiple Choice & Written Mode)
+// Learn Feature (Adaptive Learning, Multiple Choice & Written Mode)
 // ==========================================================================
 
 export class LearnController {
-  constructor(storageService) {
+  constructor(storageService, toastFn) {
     this.storage = storageService;
+    this.toast = toastFn || console.log;
     this.currentSet = null;
-    this.mode = 'mc'; // 'mc' (multiple choice) or 'written'
+    this.mode = 'mc'; // 'mc' or 'written'
     
-    // Spaced learning queues
     this.queue = [];
     this.mastered = [];
     this.currentCard = null;
@@ -18,42 +18,31 @@ export class LearnController {
   }
 
   initElements() {
-    this.promptText = document.getElementById('learnPromptText');
-    this.mcContainer = document.getElementById('learnMcContainer');
-    this.writtenContainer = document.getElementById('learnWrittenContainer');
+    this.deckTitleEl = document.getElementById('learnDeckTitle');
+    this.toggleModeBtn = document.getElementById('learnToggleMode');
+    this.masteredCountEl = document.getElementById('learnMasteredCount');
+    this.remainingCountEl = document.getElementById('learnRemainingCount');
+    this.totalCountEl = document.getElementById('learnTotalCount');
+
+    this.promptEl = document.getElementById('learnPrompt');
+    this.mcGrid = document.getElementById('learnMcGrid');
+    this.writtenWrap = document.getElementById('learnWrittenWrap');
     this.writtenInput = document.getElementById('learnWrittenInput');
     this.writtenSubmitBtn = document.getElementById('learnWrittenSubmit');
-    this.feedbackBanner = document.getElementById('learnFeedbackBanner');
-    this.feedbackHeadline = document.getElementById('learnFeedbackHeadline');
-    this.feedbackDetails = document.getElementById('learnFeedbackDetails');
+
+    this.feedbackBox = document.getElementById('learnFeedback');
+    this.feedbackText = document.getElementById('learnFeedbackText');
+    this.feedbackDetail = document.getElementById('learnFeedbackDetail');
     this.feedbackContinueBtn = document.getElementById('learnFeedbackContinue');
-
-    this.statMastered = document.getElementById('learnStatMastered');
-    this.statRemaining = document.getElementById('learnStatRemaining');
-    this.statTotal = document.getElementById('learnStatTotal');
-    this.summaryModal = document.getElementById('learnSummaryModal');
-    this.summaryMasteredScore = document.getElementById('learnSummaryScore');
-    this.restartLearnBtn = document.getElementById('learnRestartBtn');
-
-    this.toggleMcBtn = document.getElementById('learnToggleMc');
-    this.toggleWrittenBtn = document.getElementById('learnToggleWritten');
 
     this.bindEvents();
   }
 
   bindEvents() {
-    if (this.toggleMcBtn) {
-      this.toggleMcBtn.addEventListener('click', () => {
-        this.mode = 'mc';
-        this.updateModeToggleUI();
-        this.renderCurrentQuestion();
-      });
-    }
-
-    if (this.toggleWrittenBtn) {
-      this.toggleWrittenBtn.addEventListener('click', () => {
-        this.mode = 'written';
-        this.updateModeToggleUI();
+    if (this.toggleModeBtn) {
+      this.toggleModeBtn.addEventListener('click', () => {
+        this.mode = this.mode === 'mc' ? 'written' : 'mc';
+        this.toggleModeBtn.textContent = this.mode === 'mc' ? 'Mode: Multiple Choice' : 'Mode: Type Answer';
         this.renderCurrentQuestion();
       });
     }
@@ -78,20 +67,12 @@ export class LearnController {
       });
     }
 
-    if (this.restartLearnBtn) {
-      this.restartLearnBtn.addEventListener('click', () => {
-        if (this.summaryModal) this.summaryModal.classList.remove('show');
-        this.startLearnSession();
-      });
-    }
-
-    // Number key shortcuts for Multiple Choice (1, 2, 3, 4) & Enter for continue
     window.addEventListener('keydown', (e) => {
-      const learnView = document.getElementById('viewLearn');
-      if (!learnView || !learnView.classList.contains('active')) return;
+      const learnView = document.getElementById('learnView');
+      if (!learnView || learnView.style.display === 'none') return;
 
       if (this.awaitingNext) {
-        if (e.key === 'Enter' || e.key === ' ') {
+        if (e.key === 'Enter') {
           e.preventDefault();
           this.hideFeedback();
           this.nextQuestion();
@@ -101,7 +82,7 @@ export class LearnController {
 
       if (this.mode === 'mc' && ['1', '2', '3', '4'].includes(e.key)) {
         const index = parseInt(e.key, 10) - 1;
-        const options = this.mcContainer.querySelectorAll('.mc-option');
+        const options = this.mcGrid.querySelectorAll('.mc-choice-btn');
         if (options[index]) {
           options[index].click();
         }
@@ -109,23 +90,17 @@ export class LearnController {
     });
   }
 
-  updateModeToggleUI() {
-    if (this.toggleMcBtn) this.toggleMcBtn.classList.toggle('active', this.mode === 'mc');
-    if (this.toggleWrittenBtn) this.toggleWrittenBtn.classList.toggle('active', this.mode === 'written');
-  }
-
   loadSet(setId) {
     this.currentSet = this.storage.getSet(setId);
     if (!this.currentSet) return;
-    this.startLearnSession();
+    if (this.deckTitleEl) this.deckTitleEl.textContent = this.currentSet.title;
+    this.startSession();
   }
 
-  startLearnSession() {
+  startSession() {
     if (!this.currentSet || !this.currentSet.terms || this.currentSet.terms.length === 0) return;
 
-    // Clone all terms into active study queue
     this.queue = [...this.currentSet.terms];
-    // Shuffle queue initially
     for (let i = this.queue.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [this.queue[i], this.queue[j]] = [this.queue[j], this.queue[i]];
@@ -139,14 +114,15 @@ export class LearnController {
 
   updateStats() {
     const total = this.currentSet ? this.currentSet.terms.length : 0;
-    if (this.statMastered) this.statMastered.textContent = this.mastered.length;
-    if (this.statRemaining) this.statRemaining.textContent = this.queue.length;
-    if (this.statTotal) this.statTotal.textContent = total;
+    if (this.masteredCountEl) this.masteredCountEl.textContent = this.mastered.length;
+    if (this.remainingCountEl) this.remainingCountEl.textContent = this.queue.length;
+    if (this.totalCountEl) this.totalCountEl.textContent = total;
   }
 
   nextQuestion() {
     if (this.queue.length === 0) {
-      this.showCompletionScreen();
+      this.toast('🎉 100% Mastered! Starting review session.');
+      this.startSession();
       return;
     }
 
@@ -158,19 +134,16 @@ export class LearnController {
   renderCurrentQuestion() {
     if (!this.currentCard) return;
 
-    if (this.promptText) {
-      this.promptText.textContent = this.currentCard.term;
-    }
-
+    if (this.promptEl) this.promptEl.textContent = this.currentCard.term;
     this.hideFeedback();
 
     if (this.mode === 'mc') {
-      this.mcContainer.style.display = 'grid';
-      this.writtenContainer.style.display = 'none';
-      this.renderMultipleChoiceOptions();
+      this.mcGrid.style.display = 'flex';
+      this.writtenWrap.style.display = 'none';
+      this.renderMcOptions();
     } else {
-      this.mcContainer.style.display = 'none';
-      this.writtenContainer.style.display = 'flex';
+      this.mcGrid.style.display = 'none';
+      this.writtenWrap.style.display = 'flex';
       if (this.writtenInput) {
         this.writtenInput.value = '';
         setTimeout(() => this.writtenInput.focus(), 50);
@@ -178,61 +151,58 @@ export class LearnController {
     }
   }
 
-  renderMultipleChoiceOptions() {
-    if (!this.mcContainer || !this.currentSet) return;
+  renderMcOptions() {
+    if (!this.mcGrid || !this.currentSet) return;
 
     const correctAnswer = this.currentCard.definition;
     const allDefs = this.currentSet.terms
       .map(t => t.definition)
       .filter(d => d !== correctAnswer);
 
-    // Pick 3 random distractors
     const distractors = this.pickRandom(allDefs, 3);
     const options = this.shuffleArray([correctAnswer, ...distractors]);
 
-    this.mcContainer.innerHTML = options.map((opt, idx) => `
-      <button class="mc-option" data-answer="${this.escapeHtml(opt)}">
-        <span class="mc-index-badge">${idx + 1}</span>
-        <span>${opt}</span>
+    this.mcGrid.innerHTML = options.map((opt, idx) => `
+      <button class="mc-choice-btn" data-answer="${this.escapeHtml(opt)}">
+        <span class="mc-badge">${idx + 1}</span>
+        <span>${this.escapeHtml(opt)}</span>
       </button>
     `).join('');
 
-    this.mcContainer.querySelectorAll('.mc-option').forEach(btn => {
+    this.mcGrid.querySelectorAll('.mc-choice-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (this.awaitingNext) return;
-        this.handleMcSelection(btn.dataset.answer, btn);
+        this.handleMcChoice(btn.dataset.answer, btn);
       });
     });
   }
 
-  handleMcSelection(selectedAnswer, buttonEl) {
-    const isCorrect = selectedAnswer === this.currentCard.definition;
-    const allOptions = this.mcContainer.querySelectorAll('.mc-option');
+  handleMcChoice(chosen, btnEl) {
+    const isCorrect = chosen === this.currentCard.definition;
+    const allBtns = this.mcGrid.querySelectorAll('.mc-choice-btn');
 
-    allOptions.forEach(opt => {
-      opt.disabled = true;
-      if (opt.dataset.answer === this.currentCard.definition) {
-        opt.classList.add('correct');
+    allBtns.forEach(b => {
+      b.disabled = true;
+      if (b.dataset.answer === this.currentCard.definition) {
+        b.classList.add('correct');
       }
     });
 
     if (isCorrect) {
       this.mastered.push(this.currentCard);
-      this.showFeedback(true, 'Correct! Excellent job.', '');
+      this.showFeedback(true, 'Correct', '');
       this.awaitingNext = true;
       this.updateStats();
-      // Auto-advance quickly on correct choice
       setTimeout(() => {
         if (this.awaitingNext) {
           this.hideFeedback();
           this.nextQuestion();
         }
-      }, 700);
+      }, 600);
     } else {
-      buttonEl.classList.add('incorrect');
-      // Re-queue card to end of practice queue
+      btnEl.classList.add('incorrect');
       this.queue.push(this.currentCard);
-      this.showFeedback(false, 'Not quite right.', `Correct definition: <strong>${this.currentCard.definition}</strong>`);
+      this.showFeedback(false, 'Incorrect', `Correct answer: <strong>${this.escapeHtml(this.currentCard.definition)}</strong>`);
       this.awaitingNext = true;
       this.updateStats();
     }
@@ -243,13 +213,13 @@ export class LearnController {
     const userVal = this.writtenInput.value.trim();
     if (!userVal) return;
 
-    const normalizedUser = this.normalizeText(userVal);
-    const normalizedCorrect = this.normalizeText(this.currentCard.definition);
+    const normalizedUser = this.normalize(userVal);
+    const normalizedCorrect = this.normalize(this.currentCard.definition);
     const isCorrect = normalizedUser === normalizedCorrect;
 
     if (isCorrect) {
       this.mastered.push(this.currentCard);
-      this.showFeedback(true, 'Spot on! Exactly right.', '');
+      this.showFeedback(true, 'Correct!', '');
       this.awaitingNext = true;
       this.updateStats();
       setTimeout(() => {
@@ -257,46 +227,33 @@ export class LearnController {
           this.hideFeedback();
           this.nextQuestion();
         }
-      }, 800);
+      }, 700);
     } else {
       this.queue.push(this.currentCard);
-      this.showFeedback(
-        false,
-        'Incorrect answer.',
-        `You answered: <em>${this.escapeHtml(userVal)}</em><br>Correct answer: <strong>${this.currentCard.definition}</strong>`
-      );
+      this.showFeedback(false, 'Incorrect', `Correct answer: <strong>${this.escapeHtml(this.currentCard.definition)}</strong>`);
       this.awaitingNext = true;
       this.updateStats();
     }
   }
 
-  showFeedback(isCorrect, headline, details) {
-    if (!this.feedbackBanner) return;
-    this.feedbackBanner.className = `learn-feedback-banner show ${isCorrect ? 'correct' : 'incorrect'}`;
-    if (this.feedbackHeadline) this.feedbackHeadline.innerHTML = headline;
-    if (this.feedbackDetails) this.feedbackDetails.innerHTML = details;
+  showFeedback(isCorrect, text, detail) {
+    if (!this.feedbackBox) return;
+    this.feedbackBox.className = `learn-feedback show ${isCorrect ? 'correct' : 'incorrect'}`;
+    if (this.feedbackText) this.feedbackText.textContent = text;
+    if (this.feedbackDetail) this.feedbackDetail.innerHTML = detail;
     if (this.feedbackContinueBtn) {
-      this.feedbackContinueBtn.style.display = isCorrect ? 'none' : 'inline-flex';
+      this.feedbackContinueBtn.style.display = isCorrect ? 'none' : 'block';
     }
   }
 
   hideFeedback() {
-    if (this.feedbackBanner) {
-      this.feedbackBanner.className = 'learn-feedback-banner';
+    if (this.feedbackBox) {
+      this.feedbackBox.className = 'learn-feedback';
     }
   }
 
-  showCompletionScreen() {
-    if (!this.summaryModal) return;
-    const total = this.currentSet.terms.length;
-    if (this.summaryMasteredScore) {
-      this.summaryMasteredScore.textContent = `${this.mastered.length} of ${total} Terms Mastered (100%)`;
-    }
-    this.summaryModal.classList.add('show');
-  }
-
-  normalizeText(str) {
-    return str.toLowerCase().replace(/[.,/#!$%^&*;:{}=\-_`~()]/g, '').replace(/\s+/g, ' ').trim();
+  normalize(str) {
+    return (str || '').toLowerCase().replace(/[^a-z0-9]/g, '');
   }
 
   pickRandom(arr, count) {
@@ -314,6 +271,10 @@ export class LearnController {
   }
 
   escapeHtml(str) {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    return (str || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
   }
 }
